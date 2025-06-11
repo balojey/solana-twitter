@@ -4,7 +4,6 @@ import { AnchorProvider, Program } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { IDL, Twitter } from '../idl/twitter';
 
-// Replace with your actual program ID
 const PROGRAM_ID = new PublicKey('5S7sfpY15KPmL5SfQ3PM81mzeoig8uXWtdwEL2sLq67X');
 
 export function useAnchorProgram() {
@@ -12,11 +11,19 @@ export function useAnchorProgram() {
   const wallet = useWallet();
 
   const program = useMemo(() => {
-    if (!wallet.publicKey) return null;
+    if (
+      !wallet.publicKey ||
+      !wallet.signTransaction ||
+      !wallet.signAllTransactions
+    ) return null;
 
     const provider = new AnchorProvider(
       connection,
-      wallet as any,
+      {
+        publicKey: wallet.publicKey,
+        signTransaction: wallet.signTransaction,
+        signAllTransactions: wallet.signAllTransactions,
+      },
       { commitment: 'confirmed' }
     );
 
