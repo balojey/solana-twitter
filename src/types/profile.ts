@@ -1,9 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
 
-export interface Tweet {
+export interface UserProfile {
   authority: PublicKey;
-  content: string;
-  timestamp: number;
-  parent: PublicKey | null;
+  username: string;
+  bio: string;
+  createdAt: number;
   publicKey: PublicKey;
 }

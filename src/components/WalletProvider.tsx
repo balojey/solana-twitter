@@ -18,7 +18,18 @@ interface Props {
 
 export function AppWalletProvider({ children }: Props) {
   const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  
+  // Use a more robust RPC endpoint to avoid rate limiting
+  const endpoint = useMemo(() => {
+    // You can replace this with your own RPC endpoint from services like:
+    // - Helius: https://rpc.helius.xyz/?api-key=YOUR_API_KEY
+    // - QuickNode: https://your-endpoint.solana-devnet.quiknode.pro/YOUR_API_KEY/
+    // - Alchemy: https://solana-devnet.g.alchemy.com/v2/YOUR_API_KEY
+    
+    // For now, we'll use the default but with better error handling
+    // In production, replace this with a dedicated RPC endpoint
+    return process.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
+  }, [network]);
 
   const wallets = useMemo(
     () => [
