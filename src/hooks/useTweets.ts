@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
-import { useAnchorProgram } from './useAnchorProgram';
+import { useSolanaProgram } from './useSolanaProgram';
 import { Tweet } from '../types/tweet';
+import {
+  deriveTweetPDA,
+  postTweetInstruction,
+  decodeTweet,
+  isTweetAccount,
+  getAllProgramAccounts
+} from '../utils/solana';
 
 export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicKey) {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [replyCountsCache, setReplyCountsCache] = useState<Map<string, number>>(new Map());
-  const program = useAnchorProgram();
+  const program = useSolanaProgram();
   const { connection } = useConnection();
 
   const fetchTweets = async () => {
@@ -19,15 +26,15 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
       setLoading(true);
       setError(null);
 
-      const tweetAccounts = await program.account.tweet.all();
+      const tweetAccounts = await getAllProgramAccounts(connection, 'tweet');
       
-      let tweetsData: Tweet[] = tweetAccounts.map((account) => ({
-        authority: account.account.authority,
-        content: account.account.content,
-        timestamp: account.account.timestamp.toNumber(),
-        parent: account.account.parent || null,
-        publicKey: account.publicKey,
-      }));
+      let tweetsData: (Tweet & { publicKey: PublicKey })[] = tweetAccounts.map((account) => {
+        const tweetData = decodeTweet(account.account);
+        return {
+          ...tweetData,
+          publicKey: account.pubkey,
+        };
+      });
 
       // Calculate reply counts for all tweets
       const replyCounts = new Map<string, number>();
@@ -69,17 +76,20 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     }
   };
 
-  const fetchSingleTweet = async (tweetPubkey: PublicKey): Promise<Tweet | null> => {
+  const fetchSingleTweet = async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey }) | null> => {
     if (!program) return null;
 
     try {
-      const tweetAccount = await program.account.tweet.fetch(tweetPubkey);
+      const accountInfo = await program.connection.getAccountInfo(tweetPubkey);
+      
+      if (!accountInfo || !isTweetAccount(accountInfo)) {
+        return null;
+      }
+
+      const tweetData = decodeTweet(accountInfo);
       
       return {
-        authority: tweetAccount.authority,
-        content: tweetAccount.content,
-        timestamp: tweetAccount.timestamp.toNumber(),
-        parent: tweetAccount.parent || null,
+        ...tweetData,
         publicKey: tweetPubkey,
       };
     } catch (err) {
@@ -88,28 +98,47 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     }
   };
 
+  const postTweet = async (content: string, parentTweet?: PublicKey | null): Promise<string> => {
+    if (!program || !program.wallet.publicKey) {
+      throw new Error('Wallet not connected');
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const [tweetPDA] = await deriveTweetPDA(program.wallet.publicKey, timestamp);
+
+    const instruction = postTweetInstruction(
+      tweetPDA,
+      program.wallet.publicKey,
+      content,
+      timestamp,
+      parentTweet || null
+    );
+
+    return await program.sendTransaction([instruction]);
+  };
+
   const getReplyCount = (tweetPubkey: PublicKey): number => {
     return replyCountsCache.get(tweetPubkey.toString()) || 0;
   };
 
-  const fetchRepliesForTweet = async (tweetPubkey: PublicKey): Promise<Tweet[]> => {
+  const fetchRepliesForTweet = async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey })[]> => {
     if (!program) return [];
 
     try {
-      const tweetAccounts = await program.account.tweet.all();
+      const tweetAccounts = await getAllProgramAccounts(connection, 'tweet');
       
-      const replies: Tweet[] = tweetAccounts
-        .filter(account => 
-          account.account.parent && 
-          account.account.parent.equals(tweetPubkey)
-        )
-        .map((account) => ({
-          authority: account.account.authority,
-          content: account.account.content,
-          timestamp: account.account.timestamp.toNumber(),
-          parent: account.account.parent || null,
-          publicKey: account.publicKey,
-        }))
+      const replies: (Tweet & { publicKey: PublicKey })[] = tweetAccounts
+        .filter(account => {
+          const tweetData = decodeTweet(account.account);
+          return tweetData.parent && tweetData.parent.equals(tweetPubkey);
+        })
+        .map((account) => {
+          const tweetData = decodeTweet(account.account);
+          return {
+            ...tweetData,
+            publicKey: account.pubkey,
+          };
+        })
         .sort((a, b) => a.timestamp - b.timestamp); // Oldest first for replies
 
       return replies;
@@ -130,6 +159,7 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     refetch: fetchTweets,
     fetchSingleTweet,
     getReplyCount,
-    fetchRepliesForTweet
+    fetchRepliesForTweet,
+    postTweet
   };
 }
