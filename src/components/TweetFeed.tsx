@@ -8,9 +8,16 @@ interface Props {
   authorFilter?: PublicKey;
   title?: string;
   showReplies?: boolean;
+  expandReplies?: boolean;
 }
 
-export function TweetFeed({ parentTweet, authorFilter, title, showReplies = true }: Props) {
+export function TweetFeed({ 
+  parentTweet, 
+  authorFilter, 
+  title, 
+  showReplies = true,
+  expandReplies = false
+}: Props) {
   const { tweets, loading, error, refetch } = useTweets(parentTweet, authorFilter);
 
   if (loading) {
@@ -69,6 +76,8 @@ export function TweetFeed({ parentTweet, authorFilter, title, showReplies = true
               onReplyPosted={refetch}
               showReplies={showReplies}
               isReply={!!parentTweet}
+              showReplyCount={!parentTweet} // Show reply count on main feed, not on reply pages
+              expandReplies={expandReplies}
             />
           ))}
         </div>

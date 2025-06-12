@@ -4,15 +4,16 @@ import { PublicKey } from '@solana/web3.js';
 import { useTweets } from '../hooks/useTweets';
 import { TweetCard } from '../components/TweetCard';
 import { TweetFeed } from '../components/TweetFeed';
+import { TweetForm } from '../components/TweetForm';
 import { Tweet } from '../types/tweet';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
 
 export function TweetPage() {
   const { pubkey } = useParams<{ pubkey: string }>();
   const [tweet, setTweet] = useState<Tweet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { fetchSingleTweet, refetch } = useTweets();
+  const { fetchSingleTweet, refetch, getReplyCount } = useTweets();
 
   useEffect(() => {
     const loadTweet = async () => {
@@ -41,6 +42,10 @@ export function TweetPage() {
     loadTweet();
   }, [pubkey, fetchSingleTweet]);
 
+  const handleReplyPosted = () => {
+    refetch();
+  };
+
   if (loading) {
     return (
       <div className="bg-gray-800 rounded-lg p-8 text-center">
@@ -66,6 +71,8 @@ export function TweetPage() {
     );
   }
 
+  const replyCount = getReplyCount(tweet.publicKey);
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -78,18 +85,47 @@ export function TweetPage() {
       </Link>
 
       {/* Main Tweet */}
-      <TweetCard 
-        tweet={tweet} 
-        onReplyPosted={refetch}
-        showReplies={true}
-      />
+      <div className="bg-gray-800 rounded-lg border border-gray-700">
+        <TweetCard 
+          tweet={tweet} 
+          onReplyPosted={handleReplyPosted}
+          showReplies={false} // Don't show reply button in main tweet on thread page
+          showReplyCount={false} // Don't show reply count in main tweet
+        />
+        
+        {/* Reply Stats */}
+        {replyCount > 0 && (
+          <div className="px-4 pb-4 border-t border-gray-700">
+            <div className="flex items-center gap-2 text-gray-400 text-sm pt-3">
+              <MessageCircle className="w-4 h-4" />
+              <span>{replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Replies */}
-      <TweetFeed 
-        parentTweet={tweet.publicKey}
-        title="Replies"
-        showReplies={false}
-      />
+      {/* Reply Form */}
+      <div className="bg-gray-800 rounded-lg">
+        <TweetForm
+          parentTweet={tweet.publicKey}
+          onTweetPosted={handleReplyPosted}
+          placeholder="Tweet your reply..."
+        />
+      </div>
+
+      {/* Replies Thread */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <MessageCircle className="w-5 h-5" />
+          Replies
+        </h3>
+        <TweetFeed 
+          parentTweet={tweet.publicKey}
+          title=""
+          showReplies={true}
+          expandReplies={true} // Auto-expand nested replies in thread view
+        />
+      </div>
     </div>
   );
 }

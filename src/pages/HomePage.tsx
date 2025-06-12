@@ -10,8 +10,11 @@ export function HomePage() {
       {/* Tweet Form */}
       <TweetForm onTweetPosted={refetch} />
 
-      {/* Tweet Feed - only top-level tweets */}
-      <TweetFeed parentTweet={null} />
+      {/* Tweet Feed - only top-level tweets with expandable replies */}
+      <TweetFeed 
+        parentTweet={null} 
+        expandReplies={false} // Don't auto-expand replies on home page
+      />
     </div>
   );
 }

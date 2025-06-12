@@ -8,6 +8,7 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [replyCountsCache, setReplyCountsCache] = useState<Map<string, number>>(new Map());
   const program = useAnchorProgram();
   const { connection } = useConnection();
 
@@ -27,6 +28,16 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
         parent: account.account.parent || null,
         publicKey: account.publicKey,
       }));
+
+      // Calculate reply counts for all tweets
+      const replyCounts = new Map<string, number>();
+      tweetsData.forEach(tweet => {
+        if (tweet.parent) {
+          const parentKey = tweet.parent.toString();
+          replyCounts.set(parentKey, (replyCounts.get(parentKey) || 0) + 1);
+        }
+      });
+      setReplyCountsCache(replyCounts);
 
       // Apply filters
       if (parentTweet) {
@@ -77,6 +88,37 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     }
   };
 
+  const getReplyCount = (tweetPubkey: PublicKey): number => {
+    return replyCountsCache.get(tweetPubkey.toString()) || 0;
+  };
+
+  const fetchRepliesForTweet = async (tweetPubkey: PublicKey): Promise<Tweet[]> => {
+    if (!program) return [];
+
+    try {
+      const tweetAccounts = await program.account.tweet.all();
+      
+      const replies: Tweet[] = tweetAccounts
+        .filter(account => 
+          account.account.parent && 
+          account.account.parent.equals(tweetPubkey)
+        )
+        .map((account) => ({
+          authority: account.account.authority,
+          content: account.account.content,
+          timestamp: account.account.timestamp.toNumber(),
+          parent: account.account.parent || null,
+          publicKey: account.publicKey,
+        }))
+        .sort((a, b) => a.timestamp - b.timestamp); // Oldest first for replies
+
+      return replies;
+    } catch (err) {
+      console.error('Error fetching replies:', err);
+      return [];
+    }
+  };
+
   useEffect(() => {
     fetchTweets();
   }, [program, parentTweet, authorFilter]);
@@ -86,6 +128,8 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     loading, 
     error, 
     refetch: fetchTweets,
-    fetchSingleTweet 
+    fetchSingleTweet,
+    getReplyCount,
+    fetchRepliesForTweet
   };
 }
