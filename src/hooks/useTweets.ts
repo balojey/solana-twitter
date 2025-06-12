@@ -4,7 +4,7 @@ import { PublicKey } from '@solana/web3.js';
 import { useAnchorProgram } from './useAnchorProgram';
 import { Tweet } from '../types/tweet';
 
-export function useTweets() {
+export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicKey) {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,12 +20,31 @@ export function useTweets() {
 
       const tweetAccounts = await program.account.tweet.all();
       
-      const tweetsData: Tweet[] = tweetAccounts.map((account) => ({
+      let tweetsData: Tweet[] = tweetAccounts.map((account) => ({
         authority: account.account.authority,
         content: account.account.content,
         timestamp: account.account.timestamp.toNumber(),
+        parent: account.account.parent || null,
         publicKey: account.publicKey,
       }));
+
+      // Apply filters
+      if (parentTweet) {
+        // Filter for replies to a specific tweet
+        tweetsData = tweetsData.filter(tweet => 
+          tweet.parent && tweet.parent.equals(parentTweet)
+        );
+      } else if (parentTweet === null) {
+        // Filter for top-level tweets only (no parent)
+        tweetsData = tweetsData.filter(tweet => !tweet.parent);
+      }
+
+      if (authorFilter) {
+        // Filter by author
+        tweetsData = tweetsData.filter(tweet => 
+          tweet.authority.equals(authorFilter)
+        );
+      }
 
       // Sort by timestamp (newest first)
       tweetsData.sort((a, b) => b.timestamp - a.timestamp);
@@ -39,9 +58,34 @@ export function useTweets() {
     }
   };
 
+  const fetchSingleTweet = async (tweetPubkey: PublicKey): Promise<Tweet | null> => {
+    if (!program) return null;
+
+    try {
+      const tweetAccount = await program.account.tweet.fetch(tweetPubkey);
+      
+      return {
+        authority: tweetAccount.authority,
+        content: tweetAccount.content,
+        timestamp: tweetAccount.timestamp.toNumber(),
+        parent: tweetAccount.parent || null,
+        publicKey: tweetPubkey,
+      };
+    } catch (err) {
+      console.error('Error fetching single tweet:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchTweets();
-  }, [program]);
+  }, [program, parentTweet, authorFilter]);
 
-  return { tweets, loading, error, refetch: fetchTweets };
+  return { 
+    tweets, 
+    loading, 
+    error, 
+    refetch: fetchTweets,
+    fetchSingleTweet 
+  };
 }

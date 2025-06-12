@@ -1,9 +1,17 @@
 import { useTweets } from '../hooks/useTweets';
 import { TweetCard } from './TweetCard';
 import { Loader2, RefreshCw } from 'lucide-react';
+import { PublicKey } from '@solana/web3.js';
 
-export function TweetFeed() {
-  const { tweets, loading, error, refetch } = useTweets();
+interface Props {
+  parentTweet?: PublicKey | null;
+  authorFilter?: PublicKey;
+  title?: string;
+  showReplies?: boolean;
+}
+
+export function TweetFeed({ parentTweet, authorFilter, title, showReplies = true }: Props) {
+  const { tweets, loading, error, refetch } = useTweets(parentTweet, authorFilter);
 
   if (loading) {
     return (
@@ -31,10 +39,12 @@ export function TweetFeed() {
     );
   }
 
+  const feedTitle = title || (parentTweet ? 'Replies' : 'Tweet Feed');
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Tweet Feed</h2>
+        <h2 className="text-xl font-bold text-white">{feedTitle}</h2>
         <button
           onClick={refetch}
           className="text-gray-400 hover:text-white transition-colors"
@@ -46,12 +56,20 @@ export function TweetFeed() {
 
       {tweets.length === 0 ? (
         <div className="bg-gray-800 rounded-lg p-8 text-center">
-          <p className="text-gray-400">No tweets yet. Be the first to post!</p>
+          <p className="text-gray-400">
+            {parentTweet ? 'No replies yet.' : 'No tweets yet. Be the first to post!'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
           {tweets.map((tweet) => (
-            <TweetCard key={tweet.publicKey.toString()} tweet={tweet} />
+            <TweetCard 
+              key={tweet.publicKey.toString()} 
+              tweet={tweet} 
+              onReplyPosted={refetch}
+              showReplies={showReplies}
+              isReply={!!parentTweet}
+            />
           ))}
         </div>
       )}
