@@ -28,7 +28,7 @@ export function AppWalletProvider({ children }: Props) {
     
     // For now, we'll use the default but with better error handling
     // In production, replace this with a dedicated RPC endpoint
-    return process.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
+    return import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network);
   }, [network]);
 
   const wallets = useMemo(
