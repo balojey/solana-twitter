@@ -29,11 +29,6 @@ export function useAnchorProgram() {
 
     return new Program<Twitter>(IDL, PROGRAM_ID, provider);
   }, [connection, wallet]);
-
-  console.log('Wallet connected:', wallet.connected);
-  console.log('PublicKey:', wallet.publicKey?.toBase58());
-  console.log('SignTransaction available:', !!wallet.signTransaction);
-  console.log('Program:', program);
   
   return program;
 }
