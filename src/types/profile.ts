@@ -4,6 +4,5 @@ export interface UserProfile {
   authority: PublicKey;
   username: string;
   bio: string;
-  createdAt: number;
   publicKey: PublicKey;
 }
