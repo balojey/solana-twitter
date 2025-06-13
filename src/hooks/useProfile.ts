@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useSolanaProgram } from './useSolanaProgram';
@@ -17,7 +17,7 @@ export function useProfile() {
   const { publicKey } = useWallet();
   const program = useSolanaProgram();
 
-  const fetchProfile = async (authority?: PublicKey) => {
+  const fetchProfile = useCallback(async (authority?: PublicKey) => {
     const targetAuthority = authority || publicKey;
     if (!program || !targetAuthority) return null;
 
@@ -39,7 +39,7 @@ export function useProfile() {
       console.log('Profile not found for:', targetAuthority.toBase58());
       return null;
     }
-  };
+  }, [program, publicKey]);
 
   const createProfile = async (username: string, bio: string) => {
     if (!program || !publicKey) {

@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { PublicKey } from '@solana/web3.js';
 import { useProfile } from '../hooks/useProfile';
 import { TweetFeed } from '../components/TweetFeed';
+import { FollowButton } from '../components/FollowButton';
+import { FollowStats } from '../components/FollowStats';
 import { UserProfile } from '../types/profile';
 import { ArrowLeft, User, Calendar, Edit } from 'lucide-react';
 import { formatDistanceToNow } from '../utils/dateUtils';
@@ -95,8 +97,11 @@ export function ProfilePage() {
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
+              </div>
+              <FollowButton userPubkey={profile.authority} />
             </div>
             
             <p className="text-gray-400 text-sm font-mono mb-3">
@@ -104,9 +109,10 @@ export function ProfilePage() {
             </p>
             
             {profile.bio && (
-              <p className="text-gray-300 mb-3">{profile.bio}</p>
+              <p className="text-gray-300 mb-4">{profile.bio}</p>
             )}
             
+            <FollowStats userPubkey={profile.authority} />
           </div>
         </div>
       </div>

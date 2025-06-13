@@ -6,6 +6,7 @@ import { useTweets } from '../hooks/useTweets';
 import { formatDistanceToNow } from '../utils/dateUtils';
 import { MessageCircle, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { TweetForm } from './TweetForm';
+import { LikeButton } from './LikeButton';
 import { Link } from 'react-router-dom';
 
 interface Props {
@@ -138,6 +139,8 @@ export function TweetCard({
                   <MessageCircle className="w-4 h-4" />
                   Reply
                 </button>
+
+                <LikeButton tweetPubkey={tweet.publicKey} />
 
                 {showReplyCount && replyCount > 0 && (
                   <button

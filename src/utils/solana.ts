@@ -20,13 +20,19 @@ function getDiscriminator(name: string, type: 'account' | 'global'): Buffer {
 // Instruction discriminators
 const INSTRUCTION_DISCRIMINATORS = {
   createOrUpdateProfile: getDiscriminator('create_or_update_profile', 'global'),
-  postTweet: getDiscriminator('post_tweet', 'global')
+  postTweet: getDiscriminator('post_tweet', 'global'),
+  likeTweet: getDiscriminator('like_tweet', 'global'),
+  unlikeTweet: getDiscriminator('unlike_tweet', 'global'),
+  followUser: getDiscriminator('follow_user', 'global'),
+  unfollowUser: getDiscriminator('unfollow_user', 'global')
 };
 
 // Account discriminators
 const ACCOUNT_DISCRIMINATORS = {
   userProfile: getDiscriminator('UserProfile', 'account'),
-  tweet: getDiscriminator('Tweet', 'account')
+  tweet: getDiscriminator('Tweet', 'account'),
+  like: getDiscriminator('Like', 'account'),
+  follow: getDiscriminator('Follow', 'account')
 };
 
 // Utility encoders/decoders
@@ -100,6 +106,22 @@ export async function deriveTweetPDA(authority: PublicKey, timestamp: number): P
   ], PROGRAM_ID);
 }
 
+export async function deriveLikePDA(user: PublicKey, tweet: PublicKey): Promise<[PublicKey, number]> {
+  return PublicKey.findProgramAddressSync([
+    Buffer.from('like'),
+    user.toBuffer(),
+    tweet.toBuffer()
+  ], PROGRAM_ID);
+}
+
+export async function deriveFollowPDA(follower: PublicKey, following: PublicKey): Promise<[PublicKey, number]> {
+  return PublicKey.findProgramAddressSync([
+    Buffer.from('follow'),
+    follower.toBuffer(),
+    following.toBuffer()
+  ], PROGRAM_ID);
+}
+
 // Instruction builders
 export function createOrUpdateProfileInstruction(
   profile: PublicKey,
@@ -137,12 +159,95 @@ export function postTweetInstruction(
     encodeI64(timestamp),
     encodeOption(parent, encodePublicKey)
   ]);
-  console.log('pt:', INSTRUCTION_DISCRIMINATORS.postTweet);
 
   return new TransactionInstruction({
     keys: [
       { pubkey: tweet, isSigner: false, isWritable: true },
       { pubkey: authority, isSigner: true, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
+export function likeTweetInstruction(
+  like: PublicKey,
+  user: PublicKey,
+  tweet: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.likeTweet
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: like, isSigner: false, isWritable: true },
+      { pubkey: user, isSigner: true, isWritable: true },
+      { pubkey: tweet, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
+export function unlikeTweetInstruction(
+  like: PublicKey,
+  user: PublicKey,
+  tweet: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.unlikeTweet
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: like, isSigner: false, isWritable: true },
+      { pubkey: user, isSigner: true, isWritable: true },
+      { pubkey: tweet, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
+export function followUserInstruction(
+  follow: PublicKey,
+  follower: PublicKey,
+  following: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.followUser
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: follow, isSigner: false, isWritable: true },
+      { pubkey: follower, isSigner: true, isWritable: true },
+      { pubkey: following, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
+export function unfollowUserInstruction(
+  follow: PublicKey,
+  follower: PublicKey,
+  following: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.unfollowUser
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: follow, isSigner: false, isWritable: true },
+      { pubkey: follower, isSigner: true, isWritable: true },
+      { pubkey: following, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
     ],
     programId: PROGRAM_ID,
@@ -164,6 +269,16 @@ export interface Tweet {
   parent: PublicKey | null;
 }
 
+export interface Like {
+  user: PublicKey;
+  tweet: PublicKey;
+}
+
+export interface Follow {
+  follower: PublicKey;
+  following: PublicKey;
+}
+
 export function decodeUserProfile(accountInfo: AccountInfo<Buffer>): UserProfile {
   const data = accountInfo.data;
   let offset = 8;
@@ -183,6 +298,23 @@ export function decodeTweet(accountInfo: AccountInfo<Buffer>): Tweet {
   return { authority, content, timestamp, parent };
 }
 
+
+export function decodeLike(accountInfo: AccountInfo<Buffer>): Like {
+  const data = accountInfo.data;
+  let offset = 8;
+  const { value: user, newOffset: o1 } = decodePublicKey(data, offset);
+  const { value: tweet } = decodePublicKey(data, o1);
+  return { user, tweet };
+}
+
+export function decodeFollow(accountInfo: AccountInfo<Buffer>): Follow {
+  const data = accountInfo.data;
+  let offset = 8;
+  const { value: follower, newOffset: o1 } = decodePublicKey(data, offset);
+  const { value: following } = decodePublicKey(data, o1);
+  return { follower, following };
+}
+
 // Discriminator-based type checks
 export function isUserProfileAccount(accountInfo: AccountInfo<Buffer>): boolean {
   return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.userProfile);
@@ -192,14 +324,27 @@ export function isTweetAccount(accountInfo: AccountInfo<Buffer>): boolean {
   return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.tweet);
 }
 
+export function isLikeAccount(accountInfo: AccountInfo<Buffer>): boolean {
+  return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.like);
+}
+
+export function isFollowAccount(accountInfo: AccountInfo<Buffer>): boolean {
+  return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.follow);
+}
+
 // Fetch all program accounts by type
 export async function getAllProgramAccounts(
   connection: Connection,
-  accountType: 'userProfile' | 'tweet'
+  accountType: 'userProfile' | 'tweet' | 'like' | 'follow'
 ): Promise<Array<{ pubkey: PublicKey; account: AccountInfo<Buffer> }>> {
-  const discriminator = accountType === 'userProfile'
-    ? ACCOUNT_DISCRIMINATORS.userProfile
-    : ACCOUNT_DISCRIMINATORS.tweet;
+  const discriminatorMap = {
+    userProfile: ACCOUNT_DISCRIMINATORS.userProfile,
+    tweet: ACCOUNT_DISCRIMINATORS.tweet,
+    like: ACCOUNT_DISCRIMINATORS.like,
+    follow: ACCOUNT_DISCRIMINATORS.follow
+  };
+
+  const discriminator = discriminatorMap[accountType];
 
   const accounts = await connection.getProgramAccounts(PROGRAM_ID, {
     filters: [
@@ -217,4 +362,3 @@ export async function getAllProgramAccounts(
     account: acc.account
   }));
 }
-
