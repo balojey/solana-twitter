@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useSolanaProgram } from './useSolanaProgram';
@@ -19,7 +19,7 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
   const program = useSolanaProgram();
   const { connection } = useConnection();
 
-  const fetchTweets = async () => {
+  const fetchTweets = useCallback(async () => {
     if (!program) return;
 
     try {
@@ -74,9 +74,9 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     } finally {
       setLoading(false);
     }
-  };
+  }, [program, connection, parentTweet, authorFilter]);
 
-  const fetchSingleTweet = async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey }) | null> => {
+  const fetchSingleTweet = useCallback(async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey }) | null> => {
     if (!program) return null;
 
     try {
@@ -96,7 +96,7 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
       console.error('Error fetching single tweet:', err);
       return null;
     }
-  };
+  }, [program]);
 
   const postTweet = async (content: string, parentTweet?: PublicKey | null): Promise<string> => {
     if (!program || !program.wallet.publicKey) {
@@ -121,7 +121,7 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     return replyCountsCache.get(tweetPubkey.toString()) || 0;
   };
 
-  const fetchRepliesForTweet = async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey })[]> => {
+  const fetchRepliesForTweet = useCallback(async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey })[]> => {
     if (!program) return [];
 
     try {
@@ -146,11 +146,11 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
       console.error('Error fetching replies:', err);
       return [];
     }
-  };
+  }, [program, connection]);
 
   useEffect(() => {
     fetchTweets();
-  }, [program, parentTweet, authorFilter]);
+  }, [fetchTweets]);
 
   return { 
     tweets, 
