@@ -3,14 +3,15 @@ import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useFollows } from '../hooks/useFollows';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
 
 interface Props {
   userPubkey: PublicKey;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'default' | 'lg';
 }
 
-export function FollowButton({ userPubkey, className = '', size = 'md' }: Props) {
+export function FollowButton({ userPubkey, className = '', size = 'default' }: Props) {
   const [loading, setLoading] = useState(false);
   const { publicKey } = useWallet();
   const { isFollowingUser, toggleFollow } = useFollows();
@@ -35,41 +36,22 @@ export function FollowButton({ userPubkey, className = '', size = 'md' }: Props)
     return null;
   }
 
-  const sizeClasses = {
-    sm: 'px-3 py-1 text-sm',
-    md: 'px-4 py-2',
-    lg: 'px-6 py-3 text-lg'
-  };
-
-  const iconSize = {
-    sm: 'w-3 h-3',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5'
-  };
-
   return (
-    <button
+    <Button
       onClick={handleFollow}
       disabled={loading}
-      className={`
-        flex items-center gap-2 font-medium rounded-lg transition-colors
-        disabled:cursor-not-allowed disabled:opacity-50
-        ${isFollowing
-          ? 'bg-gray-600 hover:bg-red-600 text-white'
-          : 'bg-purple-600 hover:bg-purple-700 text-white'
-        }
-        ${sizeClasses[size]}
-        ${className}
-      `}
+      variant={isFollowing ? "outline" : "default"}
+      size={size}
+      className={className}
     >
       {loading ? (
-        <Loader2 className={`${iconSize[size]} animate-spin`} />
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : isFollowing ? (
-        <UserMinus className={iconSize[size]} />
+        <UserMinus className="mr-2 h-4 w-4" />
       ) : (
-        <UserPlus className={iconSize[size]} />
+        <UserPlus className="mr-2 h-4 w-4" />
       )}
       {isFollowing ? 'Unfollow' : 'Follow'}
-    </button>
+    </Button>
   );
 }

@@ -7,6 +7,9 @@ import { TweetFeed } from '../components/TweetFeed';
 import { TweetForm } from '../components/TweetForm';
 import { Tweet } from '../types/tweet';
 import { ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
+import { Card, CardContent } from '@/src/components/ui/card';
+import { Button } from '@/src/components/ui/button';
+import { Separator } from '@/src/components/ui/separator';
 
 export function TweetPage() {
   const { pubkey } = useParams<{ pubkey: string }>();
@@ -48,26 +51,29 @@ export function TweetPage() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-500" />
-        <p className="text-gray-400">Loading tweet...</p>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading tweet...</p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error || !tweet) {
     return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center">
-        <h2 className="text-xl font-bold text-white mb-2">Tweet Not Found</h2>
-        <p className="text-gray-400 mb-4">{error || 'This tweet doesn\'t exist.'}</p>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <h2 className="text-xl font-bold mb-2">Tweet Not Found</h2>
+          <p className="text-muted-foreground mb-4">{error || 'This tweet doesn\'t exist.'}</p>
+          <Button asChild variant="outline">
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -76,46 +82,46 @@ export function TweetPage() {
   return (
     <div className="space-y-6">
       {/* Back Button */}
-      <Link
-        to="/"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Home
-      </Link>
+      <Button asChild variant="ghost">
+        <Link to="/">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Link>
+      </Button>
 
       {/* Main Tweet */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700">
+      <Card>
         <TweetCard 
           tweet={tweet} 
           onReplyPosted={handleReplyPosted}
-          showReplies={false} // Don't show reply button in main tweet on thread page
-          showReplyCount={false} // Don't show reply count in main tweet
+          showReplies={false}
+          showReplyCount={false}
         />
         
         {/* Reply Stats */}
         {replyCount > 0 && (
-          <div className="px-4 pb-4 border-t border-gray-700">
-            <div className="flex items-center gap-2 text-gray-400 text-sm pt-3">
-              <MessageCircle className="w-4 h-4" />
-              <span>{replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
-            </div>
-          </div>
+          <>
+            <Separator />
+            <CardContent className="pt-3 pb-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <MessageCircle className="w-4 h-4" />
+                <span>{replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
+              </div>
+            </CardContent>
+          </>
         )}
-      </div>
+      </Card>
 
       {/* Reply Form */}
-      <div className="bg-gray-800 rounded-lg">
-        <TweetForm
-          parentTweet={tweet.publicKey}
-          onTweetPosted={handleReplyPosted}
-          placeholder="Tweet your reply..."
-        />
-      </div>
+      <TweetForm
+        parentTweet={tweet.publicKey}
+        onTweetPosted={handleReplyPosted}
+        placeholder="Tweet your reply..."
+      />
 
       {/* Replies Thread */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
           <MessageCircle className="w-5 h-5" />
           Replies
         </h3>
@@ -123,7 +129,7 @@ export function TweetPage() {
           parentTweet={tweet.publicKey}
           title=""
           showReplies={true}
-          expandReplies={true} // Auto-expand nested replies in thread view
+          expandReplies={true}
         />
       </div>
     </div>
