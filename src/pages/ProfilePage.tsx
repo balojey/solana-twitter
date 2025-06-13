@@ -107,10 +107,6 @@ export function ProfilePage() {
               <p className="text-gray-300 mb-3">{profile.bio}</p>
             )}
             
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <Calendar className="w-4 h-4" />
-              <span>Joined {formatDistanceToNow(profile.createdAt)}</span>
-            </div>
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
 } from '@solana/web3.js';
 import { sha256 } from 'js-sha256';
 import bs58 from 'bs58';
+import { Buffer } from 'buffer';
 
 // Program ID
 export const PROGRAM_ID = new PublicKey('5S7sfpY15KPmL5SfQ3PM81mzeoig8uXWtdwEL2sLq67X');
@@ -18,8 +19,8 @@ function getDiscriminator(name: string, type: 'account' | 'global'): Buffer {
 
 // Instruction discriminators
 const INSTRUCTION_DISCRIMINATORS = {
-  createOrUpdateProfile: getDiscriminator('createOrUpdateProfile', 'global'),
-  postTweet: getDiscriminator('postTweet', 'global')
+  createOrUpdateProfile: getDiscriminator('create_or_update_profile', 'global'),
+  postTweet: getDiscriminator('post_tweet', 'global')
 };
 
 // Account discriminators
@@ -85,14 +86,14 @@ export function decodeOption<T>(
 
 // PDA derivation
 export async function deriveProfilePDA(authority: PublicKey): Promise<[PublicKey, number]> {
-  return PublicKey.findProgramAddress([
+  return PublicKey.findProgramAddressSync([
     Buffer.from('profile'),
     authority.toBuffer()
   ], PROGRAM_ID);
 }
 
 export async function deriveTweetPDA(authority: PublicKey, timestamp: number): Promise<[PublicKey, number]> {
-  return PublicKey.findProgramAddress([
+  return PublicKey.findProgramAddressSync([
     Buffer.from('tweet'),
     authority.toBuffer(),
     encodeI64(timestamp)
@@ -136,6 +137,7 @@ export function postTweetInstruction(
     encodeI64(timestamp),
     encodeOption(parent, encodePublicKey)
   ]);
+  console.log('pt:', INSTRUCTION_DISCRIMINATORS.postTweet);
 
   return new TransactionInstruction({
     keys: [
