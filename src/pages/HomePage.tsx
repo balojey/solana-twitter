@@ -3,17 +3,14 @@ import { TweetFeed } from '../components/TweetFeed';
 import { useTweets } from '../hooks/useTweets';
 
 export function HomePage() {
-  const { refetch } = useTweets(null); // Only top-level tweets
+  const { refetch } = useTweets(null);
 
   return (
-    <div className="space-y-8">
-      {/* Tweet Form */}
+    <div className="space-y-6">
       <TweetForm onTweetPosted={refetch} />
-
-      {/* Tweet Feed - only top-level tweets with expandable replies */}
       <TweetFeed 
         parentTweet={null} 
-        expandReplies={false} // Don't auto-expand replies on home page
+        expandReplies={false}
       />
     </div>
   );

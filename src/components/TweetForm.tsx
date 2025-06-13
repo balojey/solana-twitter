@@ -4,6 +4,10 @@ import { PublicKey } from '@solana/web3.js';
 import { useTweets } from '../hooks/useTweets';
 import { useProfile } from '../hooks/useProfile';
 import { Send, Loader2, X, MessageCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/src/components/ui/card';
+import { Button } from '@/src/components/ui/button';
+import { Textarea } from '@/src/components/ui/textarea';
+import { useToast } from '@/src/hooks/use-toast';
 
 interface Props {
   onTweetPosted: () => void;
@@ -15,10 +19,10 @@ interface Props {
 export function TweetForm({ onTweetPosted, parentTweet, onCancel, placeholder }: Props) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { publicKey } = useWallet();
   const { hasProfile } = useProfile();
   const { postTweet } = useTweets();
+  const { toast } = useToast();
 
   const isReply = !!parentTweet;
 
@@ -29,16 +33,24 @@ export function TweetForm({ onTweetPosted, parentTweet, onCancel, placeholder }:
 
     try {
       setLoading(true);
-      setError(null);
 
       await postTweet(content.trim(), parentTweet);
+
+      toast({
+        title: isReply ? "Reply Posted!" : "Tweet Posted!",
+        description: isReply ? "Your reply has been posted." : "Your tweet has been posted.",
+      });
 
       setContent('');
       onTweetPosted();
       if (onCancel) onCancel();
     } catch (err) {
       console.error('Error posting tweet:', err);
-      setError('Failed to post tweet. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to post tweet. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -46,91 +58,96 @@ export function TweetForm({ onTweetPosted, parentTweet, onCancel, placeholder }:
 
   if (!publicKey) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6 text-center">
-        <p className="text-gray-400">Connect your wallet to post tweets</p>
-      </div>
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <p className="text-muted-foreground">Connect your wallet to post tweets</p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!hasProfile) {
     return (
-      <div className="bg-gray-800 rounded-lg p-6 text-center">
-        <p className="text-gray-400">Create a profile to start posting tweets</p>
-      </div>
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <p className="text-muted-foreground">Create a profile to start posting tweets</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6">
+    <Card>
       {isReply && (
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-purple-400">
-            <MessageCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">Replying to tweet</span>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-primary">
+              <MessageCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Replying to tweet</span>
+            </div>
+            {onCancel && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onCancel}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="text-gray-400 hover:text-white transition-colors"
+        </CardHeader>
+      )}
+
+      <CardContent className={isReply ? "pt-0" : "pt-6"}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={placeholder || (isReply ? "Tweet your reply..." : "What's happening?")}
+              rows={isReply ? 2 : 3}
+              maxLength={280}
+              disabled={loading}
+              className="resize-none"
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                {content.length}/280
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+            )}
+            <Button
+              type="submit"
+              disabled={!content.trim() || loading || content.length > 280}
+              className="flex-1"
             >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="mb-4">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={placeholder || (isReply ? "Tweet your reply..." : "What's happening?")}
-          className="w-full bg-gray-700 text-white rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-          rows={isReply ? 2 : 3}
-          maxLength={280}
-          disabled={loading}
-        />
-        <div className="flex justify-between items-center mt-2">
-          <span className="text-sm text-gray-400">
-            {content.length}/280
-          </span>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
-          >
-            Cancel
-          </button>
-        )}
-        <button
-          type="submit"
-          disabled={!content.trim() || loading || content.length > 280}
-          className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {isReply ? 'Replying...' : 'Posting...'}
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4" />
-              {isReply ? 'Reply' : 'Post Tweet'}
-            </>
-          )}
-        </button>
-      </div>
-    </form>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isReply ? 'Replying...' : 'Posting...'}
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  {isReply ? 'Reply' : 'Post Tweet'}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

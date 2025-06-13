@@ -1,13 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppWalletProvider } from './components/WalletProvider';
-import { WalletButton } from './components/WalletButton';
+import { Navigation } from './components/Navigation';
 import { ProfileSetup } from './components/ProfileSetup';
+import { Toaster } from './components/ui/toaster';
+import { TooltipProvider } from './components/ui/tooltip';
 import { useProfile } from './hooks/useProfile';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { HomePage } from './pages/HomePage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TweetPage } from './pages/TweetPage';
-import { Link } from 'react-router-dom';
 
 function TwitterApp() {
   const { publicKey } = useWallet();
@@ -16,16 +17,10 @@ function TwitterApp() {
   const showProfileSetup = publicKey && !loading && !hasProfile;
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="text-3xl font-bold text-white hover:text-purple-400 transition-colors">
-            Solana Twitter
-          </Link>
-          <WalletButton />
-        </div>
-
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      
+      <main className="container max-w-3xl mx-auto px-4 py-6">
         {/* Profile Setup Modal */}
         {showProfileSetup && (
           <ProfileSetup onProfileCreated={() => window.location.reload()} />
@@ -37,7 +32,9 @@ function TwitterApp() {
           <Route path="/profile/:pubkey" element={<ProfilePage />} />
           <Route path="/tweet/:pubkey" element={<TweetPage />} />
         </Routes>
-      </div>
+      </main>
+      
+      <Toaster />
     </div>
   );
 }
@@ -45,9 +42,11 @@ function TwitterApp() {
 function App() {
   return (
     <AppWalletProvider>
-      <Router>
-        <TwitterApp />
-      </Router>
+      <TooltipProvider>
+        <Router>
+          <TwitterApp />
+        </Router>
+      </TooltipProvider>
     </AppWalletProvider>
   );
 }

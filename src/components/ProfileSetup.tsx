@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useProfile } from '../hooks/useProfile';
-import { User, FileText, Loader2 } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/src/components/ui/dialog';
+import { Button } from '@/src/components/ui/button';
+import { Input } from '@/src/components/ui/input';
+import { Textarea } from '@/src/components/ui/textarea';
+import { Label } from '@/src/components/ui/label';
+import { useToast } from '@/src/hooks/use-toast';
 
 interface Props {
   onProfileCreated: () => void;
@@ -10,6 +16,7 @@ export function ProfileSetup({ onProfileCreated }: Props) {
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const { createProfile, loading, error } = useProfile();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,85 +25,86 @@ export function ProfileSetup({ onProfileCreated }: Props) {
 
     try {
       await createProfile(username.trim(), bio.trim());
+      toast({
+        title: "Profile Created!",
+        description: "Your profile has been successfully created.",
+      });
       onProfileCreated();
     } catch (err) {
       console.error('Failed to create profile:', err);
+      toast({
+        title: "Error",
+        description: "Failed to create profile. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-white" />
+    <Dialog open={true}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
+            <User className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Create Your Profile</h2>
-          <p className="text-gray-400">Set up your profile to start tweeting and interacting with others.</p>
-        </div>
+          <DialogTitle className="text-2xl">Create Your Profile</DialogTitle>
+          <DialogDescription>
+            Set up your profile to start tweeting and interacting with others.
+          </DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-              Username *
-            </label>
-            <input
-              type="text"
+          <div className="space-y-2">
+            <Label htmlFor="username">Username *</Label>
+            <Input
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
-              className="w-full bg-gray-700 text-white rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               maxLength={50}
               required
               disabled={loading}
             />
           </div>
 
-          <div>
-            <label htmlFor="bio" className="block text-sm font-medium text-gray-300 mb-2">
-              Bio
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell us about yourself..."
-              className="w-full bg-gray-700 text-white rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
               rows={3}
               maxLength={200}
               disabled={loading}
             />
-            <div className="text-right mt-1">
-              <span className="text-sm text-gray-400">{bio.length}/200</span>
+            <div className="text-right">
+              <span className="text-sm text-muted-foreground">{bio.length}/200</span>
             </div>
           </div>
 
           {error && (
-            <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={!username.trim() || loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full"
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating Profile...
               </>
             ) : (
-              <>
-                <FileText className="w-4 h-4" />
-                Create Profile
-              </>
+              'Create Profile'
             )}
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

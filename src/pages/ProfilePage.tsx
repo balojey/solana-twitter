@@ -5,9 +5,11 @@ import { useProfile } from '../hooks/useProfile';
 import { TweetFeed } from '../components/TweetFeed';
 import { FollowButton } from '../components/FollowButton';
 import { FollowStats } from '../components/FollowStats';
+import { UserAvatar } from '../components/UserAvatar';
 import { UserProfile } from '../types/profile';
-import { ArrowLeft, User, Calendar, Edit } from 'lucide-react';
-import { formatDistanceToNow } from '../utils/dateUtils';
+import { ArrowLeft, User } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/src/components/ui/card';
+import { Button } from '@/src/components/ui/button';
 
 export function ProfilePage() {
   const { pubkey } = useParams<{ pubkey: string }>();
@@ -45,30 +47,33 @@ export function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center">
-        <div className="w-16 h-16 bg-gray-700 rounded-full animate-pulse mx-auto mb-4"></div>
-        <div className="h-4 bg-gray-700 rounded animate-pulse mb-2"></div>
-        <div className="h-3 bg-gray-700 rounded animate-pulse w-2/3 mx-auto"></div>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="w-16 h-16 bg-muted rounded-full animate-pulse mx-auto mb-4"></div>
+          <div className="h-4 bg-muted rounded animate-pulse mb-2"></div>
+          <div className="h-3 bg-muted rounded animate-pulse w-2/3 mx-auto"></div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error || !profile) {
     return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center">
-        <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Profile Not Found</h2>
-        <p className="text-gray-400 mb-4">
-          {error || 'This user hasn\'t created a profile yet.'}
-        </p>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Profile Not Found</h2>
+          <p className="text-muted-foreground mb-4">
+            {error || 'This user hasn\'t created a profile yet.'}
+          </p>
+          <Button asChild variant="outline">
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -79,43 +84,43 @@ export function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Back Button */}
-      <Link
-        to="/"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Home
-      </Link>
+      <Button asChild variant="ghost" className="mb-4">
+        <Link to="/">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Link>
+      </Button>
 
       {/* Profile Header */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-2xl font-bold">
-              {profile.username.slice(0, 2).toUpperCase()}
-            </span>
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <UserAvatar 
+              publicKey={profile.authority}
+              username={profile.username}
+              size="xl"
+              className="flex-shrink-0"
+            />
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="text-2xl font-bold">{profile.username}</h1>
+                <FollowButton userPubkey={profile.authority} />
               </div>
-              <FollowButton userPubkey={profile.authority} />
+              
+              <p className="text-muted-foreground text-sm font-mono mb-3">
+                {truncateAddress(profile.authority.toString())}
+              </p>
+              
+              {profile.bio && (
+                <p className="text-foreground mb-4">{profile.bio}</p>
+              )}
+              
+              <FollowStats userPubkey={profile.authority} />
             </div>
-            
-            <p className="text-gray-400 text-sm font-mono mb-3">
-              {truncateAddress(profile.authority.toString())}
-            </p>
-            
-            {profile.bio && (
-              <p className="text-gray-300 mb-4">{profile.bio}</p>
-            )}
-            
-            <FollowStats userPubkey={profile.authority} />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* User's Tweets */}
       <TweetFeed 

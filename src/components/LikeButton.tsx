@@ -3,6 +3,8 @@ import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useLikes } from '../hooks/useLikes';
 import { Heart, Loader2 } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import { cn } from '@/src/lib/utils';
 
 interface Props {
   tweetPubkey: PublicKey;
@@ -32,29 +34,33 @@ export function LikeButton({ tweetPubkey, className = '' }: Props) {
 
   if (!publicKey) {
     return (
-      <div className={`flex items-center gap-1 text-gray-500 ${className}`}>
-        <Heart className="w-4 h-4" />
+      <div className={cn("flex items-center gap-1 text-muted-foreground", className)}>
+        <Heart className="h-4 w-4" />
         <span className="text-sm">{likeCount}</span>
       </div>
     );
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={handleLike}
       disabled={loading}
-      className={`flex items-center gap-1 transition-colors disabled:cursor-not-allowed ${
+      className={cn(
+        "h-auto p-1 gap-1 transition-colors",
         isLiked
-          ? 'text-red-500 hover:text-red-600'
-          : 'text-gray-400 hover:text-red-400'
-      } ${className}`}
+          ? "text-red-500 hover:text-red-600"
+          : "text-muted-foreground hover:text-red-400",
+        className
+      )}
     >
       {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+        <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
       )}
       <span className="text-sm">{likeCount}</span>
-    </button>
+    </Button>
   );
 }

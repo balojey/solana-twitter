@@ -4,10 +4,15 @@ import { UserProfile } from '../types/profile';
 import { useProfile } from '../hooks/useProfile';
 import { useTweets } from '../hooks/useTweets';
 import { formatDistanceToNow } from '../utils/dateUtils';
-import { MessageCircle, User, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { TweetForm } from './TweetForm';
 import { LikeButton } from './LikeButton';
+import { UserAvatar } from './UserAvatar';
 import { Link } from 'react-router-dom';
+import { Card, CardContent } from '@/src/components/ui/card';
+import { Button } from '@/src/components/ui/button';
+import { Separator } from '@/src/components/ui/separator';
+import { cn } from '@/src/lib/utils';
 
 interface Props {
   tweet: Tweet;
@@ -76,7 +81,6 @@ export function TweetCard({
   const handleReplyPosted = () => {
     setShowReplyForm(false);
     if (onReplyPosted) onReplyPosted();
-    // Reload replies if they're currently shown
     if (showRepliesExpanded) {
       loadReplies();
     }
@@ -87,79 +91,87 @@ export function TweetCard({
   };
 
   const displayName = authorProfile?.username || truncateAddress(tweet.authority.toString());
-  const avatarText = authorProfile?.username 
-    ? authorProfile.username.slice(0, 2).toUpperCase()
-    : tweet.authority.toString().slice(0, 2).toUpperCase();
 
   return (
-    <div className={`bg-gray-800 rounded-lg border border-gray-700 ${isReply ? 'ml-8 mt-2 border-l-4 border-l-purple-500' : ''}`}>
-      <div className="p-4">
+    <Card className={cn(
+      "transition-colors hover:bg-accent/50",
+      isReply && "ml-8 mt-2 border-l-4 border-l-primary"
+    )}>
+      <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <Link 
             to={`/profile/${tweet.authority.toString()}`}
             className="flex-shrink-0"
           >
-            <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors">
-              <span className="text-white text-sm font-medium">
-                {avatarText}
-              </span>
-            </div>
+            <UserAvatar 
+              publicKey={tweet.authority}
+              username={authorProfile?.username}
+              className="hover:ring-2 hover:ring-primary/20 transition-all"
+            />
           </Link>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <Link 
                 to={`/profile/${tweet.authority.toString()}`}
-                className="font-medium text-white hover:text-purple-400 transition-colors"
+                className="font-semibold text-foreground hover:text-primary transition-colors"
               >
                 {displayName}
               </Link>
               {!authorProfile && (
-                <span className="text-gray-500 text-sm font-mono">
+                <span className="text-muted-foreground text-sm font-mono">
                   {truncateAddress(tweet.authority.toString())}
                 </span>
               )}
-              <span className="text-gray-500 text-sm">·</span>
+              <span className="text-muted-foreground">·</span>
               <Link 
                 to={`/tweet/${tweet.publicKey.toString()}`}
-                className="text-gray-500 text-sm hover:text-gray-400 transition-colors"
+                className="text-muted-foreground text-sm hover:text-foreground transition-colors"
               >
                 {formatDistanceToNow(tweet.timestamp)}
               </Link>
             </div>
             
-            <p className="text-white leading-relaxed mb-3">{tweet.content}</p>
+            <p className="text-foreground leading-relaxed mb-3 whitespace-pre-wrap">
+              {tweet.content}
+            </p>
 
             {showReplies && (
-              <div className="flex items-center gap-4">
-                <button
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowReplyForm(!showReplyForm)}
-                  className="flex items-center gap-1 text-gray-400 hover:text-purple-400 transition-colors text-sm"
+                  className="h-auto p-1 gap-1 text-muted-foreground hover:text-primary"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  Reply
-                </button>
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="text-sm">Reply</span>
+                </Button>
 
                 <LikeButton tweetPubkey={tweet.publicKey} />
 
                 {showReplyCount && replyCount > 0 && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={toggleReplies}
-                    className="flex items-center gap-1 text-gray-400 hover:text-blue-400 transition-colors text-sm"
+                    className="h-auto p-1 gap-1 text-muted-foreground hover:text-blue-400"
                   >
                     {showRepliesExpanded ? (
-                      <ChevronUp className="w-4 h-4" />
+                      <ChevronUp className="h-4 w-4" />
                     ) : (
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className="h-4 w-4" />
                     )}
-                    {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
-                  </button>
+                    <span className="text-sm">
+                      {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+                    </span>
+                  </Button>
                 )}
 
                 {replyCount > 0 && (
                   <Link
                     to={`/tweet/${tweet.publicKey.toString()}`}
-                    className="text-gray-400 hover:text-blue-400 transition-colors text-sm"
+                    className="text-muted-foreground hover:text-blue-400 transition-colors text-sm px-1"
                   >
                     View thread
                   </Link>
@@ -179,33 +191,36 @@ export function TweetCard({
             />
           </div>
         )}
-      </div>
+      </CardContent>
 
       {/* Expanded Replies */}
       {showRepliesExpanded && replyCount > 0 && (
-        <div className="border-t border-gray-700">
-          {loadingReplies ? (
-            <div className="p-4 text-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500 mx-auto"></div>
-              <p className="text-gray-400 text-sm mt-2">Loading replies...</p>
-            </div>
-          ) : (
-            <div className="space-y-0">
-              {replies.map((reply) => (
-                <TweetCard
-                  key={reply.publicKey.toString()}
-                  tweet={reply}
-                  onReplyPosted={handleReplyPosted}
-                  showReplies={true}
-                  isReply={true}
-                  showReplyCount={true}
-                  expandReplies={false}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <>
+          <Separator />
+          <div className="p-4 pt-0">
+            {loadingReplies ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                <p className="text-muted-foreground text-sm mt-2">Loading replies...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {replies.map((reply) => (
+                  <TweetCard
+                    key={reply.publicKey.toString()}
+                    tweet={reply}
+                    onReplyPosted={handleReplyPosted}
+                    showReplies={true}
+                    isReply={true}
+                    showReplyCount={true}
+                    expandReplies={false}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
