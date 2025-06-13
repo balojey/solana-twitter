@@ -1,42 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
-import { useAnchorProgram } from './useAnchorProgram';
+import { PublicKey } from '@solana/web3.js';
+import { useSolanaProgram } from './useSolanaProgram';
 import { UserProfile } from '../types/profile';
-import { BN } from '@coral-xyz/anchor';
+import {
+  deriveProfilePDA,
+  createOrUpdateProfileInstruction,
+  decodeUserProfile,
+  isUserProfileAccount
+} from '../utils/solana';
 
 export function useProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { publicKey } = useWallet();
-  const program = useAnchorProgram();
-
-  const getProfilePDA = async (authority: PublicKey) => {
-    if (!program) return null;
-    
-    const [profilePDA] = await PublicKey.findProgramAddress(
-      [Buffer.from("profile"), authority.toBuffer()],
-      program.programId
-    );
-    return profilePDA;
-  };
+  const program = useSolanaProgram();
 
   const fetchProfile = async (authority?: PublicKey) => {
     const targetAuthority = authority || publicKey;
     if (!program || !targetAuthority) return null;
 
     try {
-      const profilePDA = await getProfilePDA(targetAuthority);
-      if (!profilePDA) return null;
+      const [profilePDA] = await deriveProfilePDA(targetAuthority);
+      const accountInfo = await program.connection.getAccountInfo(profilePDA);
+      
+      if (!accountInfo || !isUserProfileAccount(accountInfo)) {
+        return null;
+      }
 
-      const profileAccount = await program.account.userProfile.fetch(profilePDA);
+      const profileData = decodeUserProfile(accountInfo);
       
       return {
-        authority: profileAccount.authority,
-        username: profileAccount.username,
-        bio: profileAccount.bio,
-        createdAt: profileAccount.createdAt.toNumber(),
+        ...profileData,
         publicKey: profilePDA,
       } as UserProfile;
     } catch (err) {
@@ -54,17 +50,16 @@ export function useProfile() {
       setLoading(true);
       setError(null);
 
-      const profilePDA = await getProfilePDA(publicKey);
-      if (!profilePDA) throw new Error('Failed to derive profile PDA');
+      const [profilePDA] = await deriveProfilePDA(publicKey);
+      
+      const instruction = createOrUpdateProfileInstruction(
+        profilePDA,
+        publicKey,
+        username,
+        bio
+      );
 
-      await program.methods
-        .createOrUpdateProfile(username, bio)
-        .accounts({
-          profile: profilePDA,
-          authority: publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
+      await program.sendTransaction([instruction]);
 
       // Fetch the updated profile
       const updatedProfile = await fetchProfile();

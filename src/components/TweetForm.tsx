@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Keypair, SystemProgram, PublicKey } from '@solana/web3.js';
-import { useAnchorProgram } from '../hooks/useAnchorProgram';
+import { PublicKey } from '@solana/web3.js';
+import { useTweets } from '../hooks/useTweets';
 import { useProfile } from '../hooks/useProfile';
 import { Send, Loader2, X, MessageCircle } from 'lucide-react';
-import { BN } from '@coral-xyz/anchor';
 
 interface Props {
   onTweetPosted: () => void;
@@ -19,37 +18,20 @@ export function TweetForm({ onTweetPosted, parentTweet, onCancel, placeholder }:
   const [error, setError] = useState<string | null>(null);
   const { publicKey } = useWallet();
   const { hasProfile } = useProfile();
-  const program = useAnchorProgram();
+  const { postTweet } = useTweets();
 
   const isReply = !!parentTweet;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!content.trim() || !publicKey || !program || !hasProfile) return;
+    if (!content.trim() || !publicKey || !hasProfile) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      const timestamp = Math.floor(Date.now() / 1000);
-      const [tweetPDA] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("tweet"),
-          publicKey.toBuffer(),
-          Buffer.from(new BN(timestamp).toArrayLike(Buffer, "le", 8)),
-        ],
-        program.programId
-      );
-
-      await program.methods
-        .postTweet(content.trim(), new BN(timestamp), parentTweet || null)
-        .accounts({
-          tweet: tweetPDA,
-          authority: publicKey,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
+      await postTweet(content.trim(), parentTweet);
 
       setContent('');
       onTweetPosted();
