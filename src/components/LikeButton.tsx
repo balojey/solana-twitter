@@ -34,7 +34,7 @@ export function LikeButton({ tweetPubkey, className = '' }: Props) {
 
   if (!publicKey) {
     return (
-      <div className={cn("flex items-center gap-1 text-muted-foreground", className)}>
+      <div className={cn("flex items-center gap-2 text-muted-foreground", className)}>
         <Heart className="h-4 w-4" />
         <span className="text-sm">{likeCount}</span>
       </div>
@@ -48,10 +48,10 @@ export function LikeButton({ tweetPubkey, className = '' }: Props) {
       onClick={handleLike}
       disabled={loading}
       className={cn(
-        "h-auto p-1 gap-1 transition-colors",
+        "h-auto p-2 gap-2 transition-all rounded-full",
         isLiked
-          ? "text-red-500 hover:text-red-600"
-          : "text-muted-foreground hover:text-red-400",
+          ? "text-red-500 hover:text-red-600 hover:bg-red-500/10"
+          : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10",
         className
       )}
     >
@@ -60,7 +60,7 @@ export function LikeButton({ tweetPubkey, className = '' }: Props) {
       ) : (
         <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
       )}
-      <span className="text-sm">{likeCount}</span>
+      <span className="text-sm font-medium">{likeCount}</span>
     </Button>
   );
 }
