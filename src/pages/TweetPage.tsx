@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { PublicKey } from '@solana/web3.js';
 import { useTweets } from '../hooks/useTweets';
 import { TweetCard } from '../components/TweetCard';
 import { TweetFeed } from '../components/TweetFeed';
-import { TweetForm } from '../components/TweetForm';
+import { ComposeDialog } from '../components/ComposeDialog';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { EmptyState } from '../components/EmptyState';
 import { Tweet } from '../types/tweet';
-import { ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
+import { MessageCircle, Edit3 } from 'lucide-react';
 import { Card, CardContent } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Separator } from '@/src/components/ui/separator';
@@ -51,29 +53,30 @@ export function TweetPage() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading tweet...</p>
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <LoadingSpinner size="lg" className="mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading tweet...</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   if (error || !tweet) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <h2 className="text-xl font-bold mb-2">Tweet Not Found</h2>
-          <p className="text-muted-foreground mb-4">{error || 'This tweet doesn\'t exist.'}</p>
-          <Button asChild variant="outline">
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        <EmptyState
+          icon={<MessageCircle className="w-full h-full" />}
+          title="Tweet Not Found"
+          description={error || "This tweet doesn't exist or has been deleted."}
+          action={{
+            label: "Back to Home",
+            onClick: () => window.history.back()
+          }}
+        />
+      </div>
     );
   }
 
@@ -81,16 +84,8 @@ export function TweetPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <Button asChild variant="ghost">
-        <Link to="/">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Link>
-      </Button>
-
       {/* Main Tweet */}
-      <Card>
+      <div className="border-b border-border">
         <TweetCard 
           tweet={tweet} 
           onReplyPosted={handleReplyPosted}
@@ -98,39 +93,41 @@ export function TweetPage() {
           showReplyCount={false}
         />
         
-        {/* Reply Stats */}
-        {replyCount > 0 && (
-          <>
-            <Separator />
-            <CardContent className="pt-3 pb-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <MessageCircle className="w-4 h-4" />
-                <span>{replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
-              </div>
-            </CardContent>
-          </>
-        )}
-      </Card>
-
-      {/* Reply Form */}
-      <TweetForm
-        parentTweet={tweet.publicKey}
-        onTweetPosted={handleReplyPosted}
-        placeholder="Tweet your reply..."
-      />
+        {/* Reply Stats & Action */}
+        <div className="px-6 py-4 space-y-4">
+          {replyCount > 0 && (
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <MessageCircle className="w-4 h-4" />
+              <span>{replyCount} {replyCount === 1 ? 'reply' : 'replies'}</span>
+            </div>
+          )}
+          
+          <ComposeDialog 
+            parentTweet={tweet.publicKey}
+            onTweetPosted={handleReplyPosted}
+          >
+            <Button size="lg" className="w-full rounded-xl">
+              <Edit3 className="w-5 h-5 mr-2" />
+              Reply to this tweet
+            </Button>
+          </ComposeDialog>
+        </div>
+      </div>
 
       {/* Replies Thread */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <MessageCircle className="w-5 h-5" />
-          Replies
-        </h3>
-        <TweetFeed 
-          parentTweet={tweet.publicKey}
-          title=""
-          showReplies={true}
-          expandReplies={true}
-        />
+      <div className="px-6">
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <MessageCircle className="w-6 h-6 text-primary" />
+            Replies
+          </h3>
+          <TweetFeed 
+            parentTweet={tweet.publicKey}
+            title=""
+            showReplies={true}
+            expandReplies={true}
+          />
+        </div>
       </div>
     </div>
   );

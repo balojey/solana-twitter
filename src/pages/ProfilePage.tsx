@@ -6,10 +6,13 @@ import { TweetFeed } from '../components/TweetFeed';
 import { FollowButton } from '../components/FollowButton';
 import { FollowStats } from '../components/FollowStats';
 import { UserAvatar } from '../components/UserAvatar';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { EmptyState } from '../components/EmptyState';
 import { UserProfile } from '../types/profile';
-import { ArrowLeft, User } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/src/components/ui/card';
+import { User, Calendar, MapPin, Link as LinkIcon } from 'lucide-react';
+import { Card, CardContent } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs';
 
 export function ProfilePage() {
   const { pubkey } = useParams<{ pubkey: string }>();
@@ -47,33 +50,30 @@ export function ProfilePage() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <div className="w-16 h-16 bg-muted rounded-full animate-pulse mx-auto mb-4"></div>
-          <div className="h-4 bg-muted rounded animate-pulse mb-2"></div>
-          <div className="h-3 bg-muted rounded animate-pulse w-2/3 mx-auto"></div>
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <LoadingSpinner size="lg" className="mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading profile...</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Profile Not Found</h2>
-          <p className="text-muted-foreground mb-4">
-            {error || 'This user hasn\'t created a profile yet.'}
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="p-6">
+        <EmptyState
+          icon={<User className="w-full h-full" />}
+          title="Profile Not Found"
+          description={error || "This user hasn't created a profile yet."}
+          action={{
+            label: "Back to Home",
+            onClick: () => window.history.back()
+          }}
+        />
+      </div>
     );
   }
 
@@ -83,50 +83,99 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
-      <Button asChild variant="ghost" className="mb-4">
-        <Link to="/">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Link>
-      </Button>
-
       {/* Profile Header */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <UserAvatar 
-              publicKey={profile.authority}
-              username={profile.username}
-              size="xl"
-              className="flex-shrink-0"
-            />
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-2">
-                <h1 className="text-2xl font-bold">{profile.username}</h1>
-                <FollowButton userPubkey={profile.authority} />
+      <div className="relative">
+        {/* Cover Image */}
+        <div className="h-48 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-t-xl" />
+        
+        {/* Profile Info */}
+        <Card className="relative -mt-16 mx-6 border-2">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <UserAvatar 
+                publicKey={profile.authority}
+                username={profile.username}
+                size="xl"
+                className="w-24 h-24 border-4 border-background -mt-12 sm:-mt-16"
+              />
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold">{profile.username}</h1>
+                    <p className="text-muted-foreground text-sm font-mono">
+                      {truncateAddress(profile.authority.toString())}
+                    </p>
+                  </div>
+                  <FollowButton userPubkey={profile.authority} size="lg" />
+                </div>
+                
+                {profile.bio && (
+                  <p className="text-foreground mt-4 text-lg leading-relaxed">{profile.bio}</p>
+                )}
+                
+                <div className="flex items-center gap-6 mt-4 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-sm">Joined recently</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-sm">Solana Network</span>
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <FollowStats userPubkey={profile.authority} />
+                </div>
               </div>
-              
-              <p className="text-muted-foreground text-sm font-mono mb-3">
-                {truncateAddress(profile.authority.toString())}
-              </p>
-              
-              {profile.bio && (
-                <p className="text-foreground mb-4">{profile.bio}</p>
-              )}
-              
-              <FollowStats userPubkey={profile.authority} />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* User's Tweets */}
-      <TweetFeed 
-        authorFilter={profile.authority}
-        title={`${profile.username}'s Tweets`}
-      />
+      {/* Profile Tabs */}
+      <div className="px-6">
+        <Tabs defaultValue="tweets" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="tweets">Tweets</TabsTrigger>
+            <TabsTrigger value="replies">Replies</TabsTrigger>
+            <TabsTrigger value="likes">Likes</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tweets" className="mt-6">
+            <TweetFeed 
+              authorFilter={profile.authority}
+              title=""
+            />
+          </TabsContent>
+          
+          <TabsContent value="replies" className="mt-6">
+            <EmptyState
+              icon={<User className="w-full h-full" />}
+              title="No replies yet"
+              description="Replies will appear here when this user responds to tweets."
+            />
+          </TabsContent>
+          
+          <TabsContent value="likes" className="mt-6">
+            <EmptyState
+              icon={<User className="w-full h-full" />}
+              title="No likes yet"
+              description="Tweets this user has liked will appear here."
+            />
+          </TabsContent>
+          
+          <TabsContent value="media" className="mt-6">
+            <EmptyState
+              icon={<User className="w-full h-full" />}
+              title="No media yet"
+              description="Photos and videos shared by this user will appear here."
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -4,14 +4,21 @@ import { UserProfile } from '../types/profile';
 import { useProfile } from '../hooks/useProfile';
 import { useTweets } from '../hooks/useTweets';
 import { formatDistanceToNow } from '../utils/dateUtils';
-import { MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { TweetForm } from './TweetForm';
+import { MessageCircle, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { ComposeDialog } from './ComposeDialog';
 import { LikeButton } from './LikeButton';
 import { UserAvatar } from './UserAvatar';
+import { LoadingSpinner } from './LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Separator } from '@/src/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/src/components/ui/dropdown-menu';
 import { cn } from '@/src/lib/utils';
 
 interface Props {
@@ -32,7 +39,6 @@ export function TweetCard({
   expandReplies = false
 }: Props) {
   const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null);
-  const [showReplyForm, setShowReplyForm] = useState(false);
   const [showRepliesExpanded, setShowRepliesExpanded] = useState(expandReplies);
   const [replies, setReplies] = useState<Tweet[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -79,7 +85,6 @@ export function TweetCard({
   };
 
   const handleReplyPosted = () => {
-    setShowReplyForm(false);
     if (onReplyPosted) onReplyPosted();
     if (showRepliesExpanded) {
       loadReplies();
@@ -94,11 +99,11 @@ export function TweetCard({
 
   return (
     <Card className={cn(
-      "transition-colors hover:bg-accent/50",
-      isReply && "ml-8 mt-2 border-l-4 border-l-primary"
+      "transition-all duration-200 hover:shadow-md hover:bg-accent/30",
+      isReply && "ml-8 mt-2 border-l-4 border-l-primary/50"
     )}>
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
+      <CardContent className="p-6">
+        <div className="flex items-start gap-4">
           <Link 
             to={`/profile/${tweet.authority.toString()}`}
             className="flex-shrink-0"
@@ -106,12 +111,12 @@ export function TweetCard({
             <UserAvatar 
               publicKey={tweet.authority}
               username={authorProfile?.username}
-              className="hover:ring-2 hover:ring-primary/20 transition-all"
+              className="hover:ring-2 hover:ring-primary/20 transition-all duration-200"
             />
           </Link>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <Link 
                 to={`/profile/${tweet.authority.toString()}`}
                 className="font-semibold text-foreground hover:text-primary transition-colors"
@@ -130,23 +135,46 @@ export function TweetCard({
               >
                 {formatDistanceToNow(tweet.timestamp)}
               </Link>
+              
+              <div className="ml-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>Copy link</DropdownMenuItem>
+                    <DropdownMenuItem>Share tweet</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             
-            <p className="text-foreground leading-relaxed mb-3 whitespace-pre-wrap">
-              {tweet.content}
-            </p>
+            <Link 
+              to={`/tweet/${tweet.publicKey.toString()}`}
+              className="block"
+            >
+              <p className="text-foreground leading-relaxed mb-4 whitespace-pre-wrap hover:text-foreground/80 transition-colors">
+                {tweet.content}
+              </p>
+            </Link>
 
             {showReplies && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowReplyForm(!showReplyForm)}
-                  className="h-auto p-1 gap-1 text-muted-foreground hover:text-primary"
+              <div className="flex items-center gap-1 pt-2">
+                <ComposeDialog 
+                  parentTweet={tweet.publicKey}
+                  onTweetPosted={handleReplyPosted}
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="text-sm">Reply</span>
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-2 gap-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-full transition-all"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="text-sm">Reply</span>
+                  </Button>
+                </ComposeDialog>
 
                 <LikeButton tweetPubkey={tweet.publicKey} />
 
@@ -155,7 +183,7 @@ export function TweetCard({
                     variant="ghost"
                     size="sm"
                     onClick={toggleReplies}
-                    className="h-auto p-1 gap-1 text-muted-foreground hover:text-blue-400"
+                    className="h-auto p-2 gap-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-full transition-all"
                   >
                     {showRepliesExpanded ? (
                       <ChevronUp className="h-4 w-4" />
@@ -171,7 +199,7 @@ export function TweetCard({
                 {replyCount > 0 && (
                   <Link
                     to={`/tweet/${tweet.publicKey.toString()}`}
-                    className="text-muted-foreground hover:text-blue-400 transition-colors text-sm px-1"
+                    className="text-muted-foreground hover:text-blue-500 transition-colors text-sm px-2 py-1 rounded-full hover:bg-blue-500/10"
                   >
                     View thread
                   </Link>
@@ -180,31 +208,20 @@ export function TweetCard({
             )}
           </div>
         </div>
-
-        {showReplyForm && (
-          <div className="mt-4">
-            <TweetForm
-              parentTweet={tweet.publicKey}
-              onTweetPosted={handleReplyPosted}
-              onCancel={() => setShowReplyForm(false)}
-              placeholder="Tweet your reply..."
-            />
-          </div>
-        )}
       </CardContent>
 
       {/* Expanded Replies */}
       {showRepliesExpanded && replyCount > 0 && (
         <>
           <Separator />
-          <div className="p-4 pt-0">
+          <div className="p-6 pt-0">
             {loadingReplies ? (
-              <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                <p className="text-muted-foreground text-sm mt-2">Loading replies...</p>
+              <div className="text-center py-8">
+                <LoadingSpinner className="mx-auto mb-4" />
+                <p className="text-muted-foreground text-sm">Loading replies...</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 mt-4">
                 {replies.map((reply) => (
                   <TweetCard
                     key={reply.publicKey.toString()}
