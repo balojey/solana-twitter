@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useSolanaProgram } from './useSolanaProgram';
@@ -21,7 +21,7 @@ export function useFollows() {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
-  const fetchFollows = async () => {
+  const fetchFollows = useCallback(async () => {
     if (!program) return;
 
     try {
@@ -56,7 +56,7 @@ export function useFollows() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [program, connection, publicKey]);
 
   const followUser = async (followingPubkey: PublicKey): Promise<string> => {
     if (!program || !publicKey) {
@@ -116,13 +116,13 @@ export function useFollows() {
     return signature;
   };
 
-  const getFollowerCount = (userPubkey: PublicKey): number => {
+  const getFollowerCount = useCallback((userPubkey: PublicKey): number => {
     return follows.filter(follow => follow.following.equals(userPubkey)).length;
-  };
+  }, [follows]);
 
-  const getFollowingCount = (userPubkey: PublicKey): number => {
+  const getFollowingCount = useCallback((userPubkey: PublicKey): number => {
     return follows.filter(follow => follow.follower.equals(userPubkey)).length;
-  };
+  }, [follows]);
 
   const isFollowingUser = (userPubkey: PublicKey): boolean => {
     return userFollowing.has(userPubkey.toString());
@@ -136,17 +136,17 @@ export function useFollows() {
     }
   };
 
-  const getFollowers = (userPubkey: PublicKey): Follow[] => {
+  const getFollowers = useCallback((userPubkey: PublicKey): Follow[] => {
     return follows.filter(follow => follow.following.equals(userPubkey));
-  };
+  }, [follows]);
 
-  const getFollowing = (userPubkey: PublicKey): Follow[] => {
+  const getFollowing = useCallback((userPubkey: PublicKey): Follow[] => {
     return follows.filter(follow => follow.follower.equals(userPubkey));
-  };
+  }, [follows]);
 
   useEffect(() => {
     fetchFollows();
-  }, [program, publicKey]);
+  }, [fetchFollows]);
 
   return {
     follows,

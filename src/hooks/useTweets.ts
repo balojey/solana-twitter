@@ -117,9 +117,9 @@ export function useTweets(parentTweet?: PublicKey | null, authorFilter?: PublicK
     return await program.sendTransaction([instruction]);
   };
 
-  const getReplyCount = (tweetPubkey: PublicKey): number => {
+  const getReplyCount = useCallback((tweetPubkey: PublicKey): number => {
     return replyCountsCache.get(tweetPubkey.toString()) || 0;
-  };
+  }, [replyCountsCache]);
 
   const fetchRepliesForTweet = useCallback(async (tweetPubkey: PublicKey): Promise<(Tweet & { publicKey: PublicKey })[]> => {
     if (!program) return [];

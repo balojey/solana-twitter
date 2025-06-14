@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useSolanaProgram } from './useSolanaProgram';
@@ -21,7 +21,7 @@ export function useLikes() {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
 
-  const fetchLikes = async () => {
+  const fetchLikes = useCallback(async () => {
     if (!program) return;
 
     try {
@@ -64,7 +64,7 @@ export function useLikes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [program, connection, publicKey]);
 
   const likeTweet = async (tweetPubkey: PublicKey): Promise<string> => {
     if (!program || !publicKey) {
@@ -120,27 +120,27 @@ export function useLikes() {
     return signature;
   };
 
-  const getLikeCount = (tweetPubkey: PublicKey): number => {
+  const getLikeCount = useCallback((tweetPubkey: PublicKey): number => {
     const tweetKey = tweetPubkey.toString();
     return likes.get(tweetKey)?.length || 0;
-  };
+  }, [likes]);
 
   const isLikedByUser = (tweetPubkey: PublicKey): boolean => {
     const tweetKey = tweetPubkey.toString();
     return userLikes.has(tweetKey);
   };
 
-  const toggleLike = async (tweetPubkey: PublicKey): Promise<string> => {
+  const toggleLike = useCallback(async (tweetPubkey: PublicKey): Promise<string> => {
     if (isLikedByUser(tweetPubkey)) {
       return await unlikeTweet(tweetPubkey);
     } else {
       return await likeTweet(tweetPubkey);
     }
-  };
+  }, [isLikedByUser, likeTweet, unlikeTweet]);
 
   useEffect(() => {
     fetchLikes();
-  }, [program, publicKey]);
+  }, [fetchLikes]);
 
   return {
     likes,

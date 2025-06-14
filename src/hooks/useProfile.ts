@@ -99,7 +99,7 @@ export function useProfile() {
     };
 
     loadProfile();
-  }, [publicKey, program]);
+  }, [publicKey, program, fetchProfile]);
 
   return {
     profile,
