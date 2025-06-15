@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { ArrowLeft, MoreHorizontal, Sparkles } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
+import { ModeToggle } from '@/src/components/ui/mode-toggle';
 import { useRouter } from '../../hooks/useRouter';
 
 export function TopBar() {
@@ -14,13 +15,14 @@ export function TopBar() {
     if (path.startsWith('/tweet/')) return 'Tweet';
     if (path === '/explore') return 'Explore';
     if (path === '/notifications') return 'Notifications';
+    if (path === '/bookmarks') return 'Bookmarks';
     return 'Solana Social';
   };
 
   const showBackButton = location.pathname !== '/';
 
   return (
-    <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/50 shadow-sm">
+    <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-5">
           {showBackButton && (
@@ -45,13 +47,16 @@ export function TopBar() {
           </div>
         </div>
         
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="rounded-2xl hover:bg-accent/80 transition-all duration-300 hover:scale-105"
-        >
-          <MoreHorizontal className="w-6 h-6" />
-        </Button>
+        <div className="flex items-center gap-3">
+          <ModeToggle />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-2xl hover:bg-accent/80 transition-all duration-300 hover:scale-105"
+          >
+            <MoreHorizontal className="w-6 h-6" />
+          </Button>
+        </div>
       </div>
     </div>
   );
