@@ -35,19 +35,21 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full p-6">
+    <div className="flex flex-col h-full p-8">
       {/* Logo */}
-      <div className="mb-8">
-        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <Twitter className="w-5 h-5 text-primary-foreground" />
+      <div className="mb-12">
+        <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-all duration-300 group">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+            <Twitter className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">Solana Social</span>
+          <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+            Solana Social
+          </span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -57,53 +59,56 @@ export function Sidebar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 group",
+                "flex items-center gap-5 px-6 py-4 rounded-2xl text-lg font-medium transition-all duration-300 group relative overflow-hidden",
                 isActive 
-                  ? "bg-primary text-primary-foreground shadow-lg" 
-                  : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25" 
+                  : "text-foreground hover:bg-gradient-to-r hover:from-accent hover:to-accent/80 hover:text-accent-foreground hover:shadow-md"
               )}
             >
               <Icon className={cn(
-                "w-6 h-6 transition-transform group-hover:scale-110",
-                isActive && "text-primary-foreground"
+                "w-7 h-7 transition-all duration-300 group-hover:scale-110",
+                isActive && "text-primary-foreground drop-shadow-sm"
               )} />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 font-semibold">{item.label}</span>
               {item.count && (
-                <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full">
+                <span className="bg-destructive text-destructive-foreground text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">
                   {item.count}
                 </span>
+              )}
+              {isActive && (
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-2xl" />
               )}
             </Link>
           );
         })}
 
         {/* Compose Button */}
-        <div className="pt-4">
+        <div className="pt-6">
           <ComposeDialog>
-            <Button size="lg" className="w-full rounded-xl font-semibold text-lg py-6">
-              <Edit3 className="w-5 h-5 mr-2" />
+            <Button size="lg" className="w-full rounded-2xl font-bold text-lg py-7 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <Edit3 className="w-6 h-6 mr-3" />
               Compose
             </Button>
           </ComposeDialog>
         </div>
       </nav>
 
-      <Separator className="my-6" />
+      <Separator className="my-8 bg-border/50" />
 
       {/* User Section */}
       {publicKey ? (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Link 
             to={`/profile/${publicKey.toString()}`}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent transition-colors"
+            className="flex items-center gap-4 p-4 rounded-2xl hover:bg-accent/50 transition-all duration-300 group"
           >
-            <Avatar className="w-10 h-10">
-              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+            <Avatar className="w-12 h-12 ring-2 ring-border/50 group-hover:ring-primary/50 transition-all duration-300 group-hover:scale-105">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg">
                 {profile?.username ? profile.username.slice(0, 2).toUpperCase() : publicKey.toString().slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate">
+              <p className="font-bold text-lg truncate group-hover:text-primary transition-colors duration-300">
                 {profile?.username || truncateAddress(publicKey.toString())}
               </p>
               <p className="text-sm text-muted-foreground font-mono">
@@ -112,8 +117,8 @@ export function Sidebar() {
             </div>
           </Link>
           
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1">
+          <div className="flex gap-3">
+            <Button variant="outline" size="sm" className="flex-1 rounded-xl hover:bg-accent/80 transition-all duration-300">
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
@@ -121,7 +126,7 @@ export function Sidebar() {
               variant="outline" 
               size="sm" 
               onClick={() => disconnect()}
-              className="flex-1"
+              className="flex-1 rounded-xl hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-all duration-300"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Disconnect
@@ -129,10 +134,10 @@ export function Sidebar() {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <WalletButton />
-          <p className="text-sm text-muted-foreground text-center">
-            Connect your wallet to get started
+          <p className="text-sm text-muted-foreground text-center leading-relaxed">
+            Connect your wallet to get started with Solana Social
           </p>
         </div>
       )}

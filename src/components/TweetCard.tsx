@@ -99,11 +99,11 @@ export function TweetCard({
 
   return (
     <Card className={cn(
-      "transition-all duration-200 hover:shadow-md hover:bg-accent/30",
-      isReply && "ml-8 mt-2 border-l-4 border-l-primary/50"
+      "transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:bg-card/80 backdrop-blur-sm border-border/50 group",
+      isReply && "ml-12 mt-3 border-l-4 border-l-primary/30 rounded-l-none"
     )}>
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4">
+      <CardContent className="p-8">
+        <div className="flex items-start gap-5">
           <Link 
             to={`/profile/${tweet.authority.toString()}`}
             className="flex-shrink-0"
@@ -111,41 +111,41 @@ export function TweetCard({
             <UserAvatar 
               publicKey={tweet.authority}
               username={authorProfile?.username}
-              className="hover:ring-2 hover:ring-primary/20 transition-all duration-200"
+              className="hover:ring-4 hover:ring-primary/20 transition-all duration-300 hover:scale-105"
             />
           </Link>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-3 mb-4">
               <Link 
                 to={`/profile/${tweet.authority.toString()}`}
-                className="font-semibold text-foreground hover:text-primary transition-colors"
+                className="font-bold text-lg text-foreground hover:text-primary transition-colors duration-300"
               >
                 {displayName}
               </Link>
               {!authorProfile && (
-                <span className="text-muted-foreground text-sm font-mono">
+                <span className="text-muted-foreground text-sm font-mono bg-muted/50 px-2 py-1 rounded-lg">
                   {truncateAddress(tweet.authority.toString())}
                 </span>
               )}
               <span className="text-muted-foreground">·</span>
               <Link 
                 to={`/tweet/${tweet.publicKey.toString()}`}
-                className="text-muted-foreground text-sm hover:text-foreground transition-colors"
+                className="text-muted-foreground text-sm hover:text-foreground transition-colors duration-300 hover:underline"
               >
                 {formatDistanceToNow(tweet.timestamp)}
               </Link>
               
-              <div className="ml-auto">
+              <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-accent/80 transition-all duration-300">
+                      <MoreHorizontal className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Copy link</DropdownMenuItem>
-                    <DropdownMenuItem>Share tweet</DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/50">
+                    <DropdownMenuItem className="hover:bg-accent/80 transition-colors duration-200">Copy link</DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-accent/80 transition-colors duration-200">Share tweet</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -155,13 +155,13 @@ export function TweetCard({
               to={`/tweet/${tweet.publicKey.toString()}`}
               className="block"
             >
-              <p className="text-foreground leading-relaxed mb-4 whitespace-pre-wrap hover:text-foreground/80 transition-colors">
+              <p className="text-foreground leading-relaxed mb-6 whitespace-pre-wrap hover:text-foreground/90 transition-colors duration-300 text-lg">
                 {tweet.content}
               </p>
             </Link>
 
             {showReplies && (
-              <div className="flex items-center gap-1 pt-2">
+              <div className="flex items-center gap-2 pt-4">
                 <ComposeDialog 
                   parentTweet={tweet.publicKey}
                   onTweetPosted={handleReplyPosted}
@@ -169,10 +169,10 @@ export function TweetCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-auto p-2 gap-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-full transition-all"
+                    className="h-auto p-3 gap-3 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-2xl transition-all duration-300 hover:scale-105"
                   >
-                    <MessageCircle className="h-4 w-4" />
-                    <span className="text-sm">Reply</span>
+                    <MessageCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">Reply</span>
                   </Button>
                 </ComposeDialog>
 
@@ -183,14 +183,14 @@ export function TweetCard({
                     variant="ghost"
                     size="sm"
                     onClick={toggleReplies}
-                    className="h-auto p-2 gap-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-full transition-all"
+                    className="h-auto p-3 gap-3 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-2xl transition-all duration-300 hover:scale-105"
                   >
                     {showRepliesExpanded ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-5 w-5" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-5 w-5" />
                     )}
-                    <span className="text-sm">
+                    <span className="text-sm font-medium">
                       {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
                     </span>
                   </Button>
@@ -199,7 +199,7 @@ export function TweetCard({
                 {replyCount > 0 && (
                   <Link
                     to={`/tweet/${tweet.publicKey.toString()}`}
-                    className="text-muted-foreground hover:text-blue-500 transition-colors text-sm px-2 py-1 rounded-full hover:bg-blue-500/10"
+                    className="text-muted-foreground hover:text-blue-500 transition-colors duration-300 text-sm px-3 py-2 rounded-2xl hover:bg-blue-500/10 font-medium"
                   >
                     View thread
                   </Link>
@@ -213,15 +213,15 @@ export function TweetCard({
       {/* Expanded Replies */}
       {showRepliesExpanded && replyCount > 0 && (
         <>
-          <Separator />
-          <div className="p-6 pt-0">
+          <Separator className="bg-border/30" />
+          <div className="p-8 pt-0">
             {loadingReplies ? (
-              <div className="text-center py-8">
-                <LoadingSpinner className="mx-auto mb-4" />
+              <div className="text-center py-12">
+                <LoadingSpinner className="mx-auto mb-6" />
                 <p className="text-muted-foreground text-sm">Loading replies...</p>
               </div>
             ) : (
-              <div className="space-y-4 mt-4">
+              <div className="space-y-6 mt-6">
                 {replies.map((reply) => (
                   <TweetCard
                     key={reply.publicKey.toString()}
