@@ -279,10 +279,12 @@ export function unfollowUserInstruction(
 export function retweetInstruction(
   retweet: PublicKey,
   user: PublicKey,
-  originalTweet: PublicKey
+  originalTweet: PublicKey,
+  timestamp: number
 ): TransactionInstruction {
   const data = Buffer.concat([
-    INSTRUCTION_DISCRIMINATORS.retweet
+    INSTRUCTION_DISCRIMINATORS.retweet,
+    encodeI64(timestamp)
   ]);
 
   return new TransactionInstruction({
@@ -372,7 +374,6 @@ export interface Retweet {
 export interface Bookmark {
   user: PublicKey;
   tweet: PublicKey;
-  timestamp: number;
 }
 
 export function decodeUserProfile(accountInfo: AccountInfo<Buffer>): UserProfile {
@@ -423,9 +424,8 @@ export function decodeBookmark(accountInfo: AccountInfo<Buffer>): Bookmark {
   const data = accountInfo.data;
   let offset = 8;
   const { value: user, newOffset: o1 } = decodePublicKey(data, offset);
-  const { value: tweet, newOffset: o2 } = decodePublicKey(data, o1);
-  const { value: timestamp } = decodeI64(data, o2);
-  return { user, tweet, timestamp };
+  const { value: tweet } = decodePublicKey(data, o1);
+  return { user, tweet };
 }
 
 // Discriminator-based type checks

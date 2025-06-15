@@ -43,7 +43,7 @@ export function useBookmarks() {
           };
         });
 
-      return userBookmarksData.sort((a, b) => b.timestamp - a.timestamp);
+      return userBookmarksData;
     } catch (err) {
       console.error('Error fetching user bookmarks:', err);
       return [];

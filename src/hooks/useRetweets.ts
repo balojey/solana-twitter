@@ -10,6 +10,7 @@ import {
   isRetweetAccount,
   getAllProgramAccounts
 } from '../utils/solana';
+import { time } from 'console';
 
 export function useRetweets() {
   const [retweets, setRetweets] = useState<Map<string, Retweet[]>>(new Map());
@@ -70,12 +71,15 @@ export function useRetweets() {
       throw new Error('Wallet not connected');
     }
 
+    const timestamp = Math.floor(Date.now() / 1000);
     const [retweetPDA] = await deriveRetweetPDA(publicKey, tweetPubkey);
+    console.log('Passed here!')
 
     const instruction = retweetInstruction(
       retweetPDA,
       publicKey,
-      tweetPubkey
+      tweetPubkey,
+      timestamp
     );
 
     const signature = await program.sendTransaction([instruction]);
