@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, Sparkles } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { useRouter } from '../../hooks/useRouter';
 
@@ -20,24 +20,37 @@ export function TopBar() {
   const showBackButton = location.pathname !== '/';
 
   return (
-    <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-4">
+    <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/50 shadow-sm">
+      <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-5">
           {showBackButton && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
-              className="rounded-full"
+              className="rounded-2xl hover:bg-accent/80 transition-all duration-300 hover:scale-105"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-6 h-6" />
             </Button>
           )}
-          <h1 className="text-xl font-bold">{getPageTitle()}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+              {getPageTitle()}
+            </h1>
+            {location.pathname === '/' && (
+              <div className="w-6 h-6 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+            )}
+          </div>
         </div>
         
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <MoreHorizontal className="w-5 h-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-2xl hover:bg-accent/80 transition-all duration-300 hover:scale-105"
+        >
+          <MoreHorizontal className="w-6 h-6" />
         </Button>
       </div>
     </div>

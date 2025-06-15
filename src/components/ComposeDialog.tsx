@@ -79,39 +79,39 @@ export function ComposeDialog({ children, parentTweet, onTweetPosted }: ComposeD
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl p-0">
-        <DialogHeader className="px-6 py-4 border-b border-border">
+      <DialogContent className="sm:max-w-2xl p-0 bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl">
+        <DialogHeader className="px-8 py-6 border-b border-border/30">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold">
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
               {isReply ? 'Reply to tweet' : 'Compose tweet'}
             </DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setOpen(false)}
-              className="rounded-full"
+              className="rounded-2xl hover:bg-accent/80 transition-all duration-300 hover:scale-105"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </Button>
           </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-1 px-6 py-4">
-            <div className="flex gap-4">
-              <Avatar className="w-12 h-12 flex-shrink-0">
-                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+          <div className="flex-1 px-8 py-6">
+            <div className="flex gap-5">
+              <Avatar className="w-14 h-14 flex-shrink-0 ring-2 ring-border/50 hover:ring-primary/50 transition-all duration-300">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg">
                   {profile?.username ? profile.username.slice(0, 2).toUpperCase() : publicKey.toString().slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex-1 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">
+              <div className="flex-1 space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-lg">
                       {profile?.username || truncateAddress(publicKey.toString())}
                     </span>
-                    <span className="text-muted-foreground text-sm font-mono">
+                    <span className="text-muted-foreground text-sm font-mono bg-muted/50 px-2 py-1 rounded-lg">
                       {truncateAddress(publicKey.toString())}
                     </span>
                   </div>
@@ -120,34 +120,34 @@ export function ComposeDialog({ children, parentTweet, onTweetPosted }: ComposeD
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder={isReply ? "Tweet your reply..." : "What's happening?"}
-                    className="min-h-32 text-lg border-none p-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="min-h-40 text-lg border-none p-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent placeholder:text-muted-foreground/70"
                     maxLength={maxLength}
                     disabled={loading}
                   />
                 </div>
 
                 {/* Tweet Options */}
-                <div className="flex items-center gap-4 text-primary">
-                  <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                    <Image className="w-5 h-5" />
+                <div className="flex items-center gap-2 text-primary">
+                  <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 hover:bg-primary/10 transition-all duration-300 hover:scale-105">
+                    <Image className="w-6 h-6" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                    <Smile className="w-5 h-5" />
+                  <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 hover:bg-primary/10 transition-all duration-300 hover:scale-105">
+                    <Smile className="w-6 h-6" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                    <MapPin className="w-5 h-5" />
+                  <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 hover:bg-primary/10 transition-all duration-300 hover:scale-105">
+                    <MapPin className="w-6 h-6" />
                   </Button>
                 </div>
               </div>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/30" />
 
-          <div className="px-6 py-4">
+          <div className="px-8 py-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className={`text-sm font-medium ${
+              <div className="flex items-center gap-6">
+                <span className={`text-sm font-bold ${
                   remainingChars < 20 
                     ? remainingChars < 0 
                       ? 'text-destructive' 
@@ -164,7 +164,7 @@ export function ComposeDialog({ children, parentTweet, onTweetPosted }: ComposeD
                         cy="16"
                         r="14"
                         stroke="currentColor"
-                        strokeWidth="2"
+                        strokeWidth="3"
                         fill="none"
                         className="text-muted-foreground/20"
                       />
@@ -173,7 +173,7 @@ export function ComposeDialog({ children, parentTweet, onTweetPosted }: ComposeD
                         cy="16"
                         r="14"
                         stroke="currentColor"
-                        strokeWidth="2"
+                        strokeWidth="3"
                         fill="none"
                         strokeDasharray={`${2 * Math.PI * 14}`}
                         strokeDashoffset={`${2 * Math.PI * 14 * (1 - (maxLength - content.length) / maxLength)}`}
@@ -187,16 +187,16 @@ export function ComposeDialog({ children, parentTweet, onTweetPosted }: ComposeD
               <Button
                 type="submit"
                 disabled={!content.trim() || loading || content.length > maxLength}
-                className="rounded-full px-6 font-semibold"
+                className="rounded-2xl px-8 font-bold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-3 h-5 w-5 animate-spin" />
                     {isReply ? 'Replying...' : 'Posting...'}
                   </>
                 ) : (
                   <>
-                    <Send className="mr-2 h-4 w-4" />
+                    <Send className="mr-3 h-5 w-5" />
                     {isReply ? 'Reply' : 'Tweet'}
                   </>
                 )}
