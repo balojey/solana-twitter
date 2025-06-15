@@ -8,6 +8,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { TweetPage } from './pages/TweetPage';
 import { ExplorePage } from './pages/ExplorePage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { BookmarksPage } from './pages/BookmarksPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
               <Route path="/tweet/:pubkey" element={<TweetPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/bookmarks" element={<BookmarksPage />} />
             </Routes>
           </AppShell>
           <Toaster />

@@ -8,7 +8,8 @@ import {
   Edit3,
   Settings,
   LogOut,
-  Twitter
+  Twitter,
+  Bookmark
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Avatar, AvatarFallback } from '@/src/components/ui/avatar';
@@ -27,6 +28,7 @@ export function Sidebar() {
     { icon: Home, label: 'Home', path: '/', count: null },
     { icon: Search, label: 'Explore', path: '/explore', count: null },
     { icon: Bell, label: 'Notifications', path: '/notifications', count: 3 },
+    { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks', count: null },
     { icon: User, label: 'Profile', path: publicKey ? `/profile/${publicKey.toString()}` : '/profile', count: null },
   ];
 
