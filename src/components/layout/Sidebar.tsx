@@ -14,6 +14,7 @@ import {
 import { Button } from '@/src/components/ui/button';
 import { Avatar, AvatarFallback } from '@/src/components/ui/avatar';
 import { Separator } from '@/src/components/ui/separator';
+import { ModeToggle } from '@/src/components/ui/mode-toggle';
 import { WalletButton } from '../WalletButton';
 import { useProfile } from '../../hooks/useProfile';
 import { ComposeDialog } from '../ComposeDialog';
@@ -37,7 +38,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full p-8">
+    <div className="flex flex-col h-full p-8 bg-card/30 backdrop-blur-xl border-r border-border/50">
       {/* Logo */}
       <div className="mb-12">
         <Link to="/" className="flex items-center gap-4 hover:opacity-80 transition-all duration-300 group">
@@ -120,6 +121,7 @@ export function Sidebar() {
           </Link>
           
           <div className="flex gap-3">
+            <ModeToggle />
             <Button variant="outline" size="sm" className="flex-1 rounded-xl hover:bg-accent/80 transition-all duration-300">
               <Settings className="w-4 h-4 mr-2" />
               Settings
@@ -138,6 +140,9 @@ export function Sidebar() {
       ) : (
         <div className="space-y-6">
           <WalletButton />
+          <div className="flex justify-center">
+            <ModeToggle />
+          </div>
           <p className="text-sm text-muted-foreground text-center leading-relaxed">
             Connect your wallet to get started with Solana Social
           </p>
