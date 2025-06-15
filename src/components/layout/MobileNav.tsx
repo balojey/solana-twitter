@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Home, User, Edit3, Search } from 'lucide-react';
+import { Home, User, Edit3, Search, Bookmark } from 'lucide-react';
 import { ComposeDialog } from '../ComposeDialog';
 import { cn } from '@/src/lib/utils';
 
@@ -11,6 +11,7 @@ export function MobileNav() {
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Search, label: 'Explore', path: '/explore' },
+    { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
     { icon: User, label: 'Profile', path: publicKey ? `/profile/${publicKey.toString()}` : '/profile' },
   ];
 

@@ -3,10 +3,13 @@ import { Tweet } from '../types/tweet';
 import { UserProfile } from '../types/profile';
 import { useProfile } from '../hooks/useProfile';
 import { useTweets } from '../hooks/useTweets';
+import { useRetweets } from '../hooks/useRetweets';
 import { formatDistanceToNow } from '../utils/dateUtils';
-import { MessageCircle, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { MessageCircle, ChevronDown, ChevronUp, MoreHorizontal, Repeat } from 'lucide-react';
 import { ComposeDialog } from './ComposeDialog';
 import { LikeButton } from './LikeButton';
+import { RetweetButton } from './RetweetButton';
+import { BookmarkButton } from './BookmarkButton';
 import { UserAvatar } from './UserAvatar';
 import { LoadingSpinner } from './LoadingSpinner';
 import { Link } from 'react-router-dom';
@@ -28,6 +31,7 @@ interface Props {
   isReply?: boolean;
   showReplyCount?: boolean;
   expandReplies?: boolean;
+  retweetedBy?: { username?: string; publicKey: string } | null;
 }
 
 export function TweetCard({ 
@@ -36,7 +40,8 @@ export function TweetCard({
   showReplies = true, 
   isReply = false,
   showReplyCount = true,
-  expandReplies = false
+  expandReplies = false,
+  retweetedBy = null
 }: Props) {
   const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null);
   const [showRepliesExpanded, setShowRepliesExpanded] = useState(expandReplies);
@@ -44,6 +49,7 @@ export function TweetCard({
   const [loadingReplies, setLoadingReplies] = useState(false);
   const { fetchProfile } = useProfile();
   const { getReplyCount, fetchRepliesForTweet } = useTweets();
+  const { getRetweetedBy } = useRetweets();
 
   const replyCount = getReplyCount(tweet.publicKey);
 
@@ -103,6 +109,22 @@ export function TweetCard({
       isReply && "ml-12 mt-3 border-l-4 border-l-primary/30 rounded-l-none"
     )}>
       <CardContent className="p-8">
+        {/* Retweet indicator */}
+        {retweetedBy && (
+          <div className="flex items-center gap-3 mb-4 text-muted-foreground text-sm">
+            <Repeat className="w-4 h-4 text-green-500" />
+            <span>
+              Retweeted by{' '}
+              <Link 
+                to={`/profile/${retweetedBy.publicKey}`}
+                className="font-medium hover:text-foreground transition-colors duration-300"
+              >
+                @{retweetedBy.username || truncateAddress(retweetedBy.publicKey)}
+              </Link>
+            </span>
+          </div>
+        )}
+
         <div className="flex items-start gap-5">
           <Link 
             to={`/profile/${tweet.authority.toString()}`}
@@ -176,7 +198,11 @@ export function TweetCard({
                   </Button>
                 </ComposeDialog>
 
+                <RetweetButton tweetPubkey={tweet.publicKey} />
+
                 <LikeButton tweetPubkey={tweet.publicKey} />
+
+                <BookmarkButton tweetPubkey={tweet.publicKey} />
 
                 {showReplyCount && replyCount > 0 && (
                   <Button

@@ -24,7 +24,10 @@ const INSTRUCTION_DISCRIMINATORS = {
   likeTweet: getDiscriminator('like_tweet', 'global'),
   unlikeTweet: getDiscriminator('unlike_tweet', 'global'),
   followUser: getDiscriminator('follow_user', 'global'),
-  unfollowUser: getDiscriminator('unfollow_user', 'global')
+  unfollowUser: getDiscriminator('unfollow_user', 'global'),
+  retweet: getDiscriminator('retweet', 'global'),
+  bookmarkTweet: getDiscriminator('bookmark_tweet', 'global'),
+  unbookmarkTweet: getDiscriminator('unbookmark_tweet', 'global')
 };
 
 // Account discriminators
@@ -32,7 +35,9 @@ const ACCOUNT_DISCRIMINATORS = {
   userProfile: getDiscriminator('UserProfile', 'account'),
   tweet: getDiscriminator('Tweet', 'account'),
   like: getDiscriminator('Like', 'account'),
-  follow: getDiscriminator('Follow', 'account')
+  follow: getDiscriminator('Follow', 'account'),
+  retweet: getDiscriminator('Retweet', 'account'),
+  bookmark: getDiscriminator('Bookmark', 'account')
 };
 
 // Utility encoders/decoders
@@ -119,6 +124,22 @@ export async function deriveFollowPDA(follower: PublicKey, following: PublicKey)
     Buffer.from('follow'),
     follower.toBuffer(),
     following.toBuffer()
+  ], PROGRAM_ID);
+}
+
+export async function deriveRetweetPDA(user: PublicKey, tweet: PublicKey): Promise<[PublicKey, number]> {
+  return PublicKey.findProgramAddressSync([
+    Buffer.from('retweet'),
+    user.toBuffer(),
+    tweet.toBuffer()
+  ], PROGRAM_ID);
+}
+
+export async function deriveBookmarkPDA(user: PublicKey, tweet: PublicKey): Promise<[PublicKey, number]> {
+  return PublicKey.findProgramAddressSync([
+    Buffer.from('bookmark'),
+    user.toBuffer(),
+    tweet.toBuffer()
   ], PROGRAM_ID);
 }
 
@@ -255,6 +276,69 @@ export function unfollowUserInstruction(
   });
 }
 
+export function retweetInstruction(
+  retweet: PublicKey,
+  user: PublicKey,
+  originalTweet: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.retweet
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: retweet, isSigner: false, isWritable: true },
+      { pubkey: user, isSigner: true, isWritable: true },
+      { pubkey: originalTweet, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
+export function bookmarkTweetInstruction(
+  bookmark: PublicKey,
+  user: PublicKey,
+  tweet: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.bookmarkTweet
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: bookmark, isSigner: false, isWritable: true },
+      { pubkey: user, isSigner: true, isWritable: true },
+      { pubkey: tweet, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
+export function unbookmarkTweetInstruction(
+  bookmark: PublicKey,
+  user: PublicKey,
+  tweet: PublicKey
+): TransactionInstruction {
+  const data = Buffer.concat([
+    INSTRUCTION_DISCRIMINATORS.unbookmarkTweet
+  ]);
+
+  return new TransactionInstruction({
+    keys: [
+      { pubkey: bookmark, isSigner: false, isWritable: true },
+      { pubkey: user, isSigner: true, isWritable: true },
+      { pubkey: tweet, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    programId: PROGRAM_ID,
+    data
+  });
+}
+
 // Account types and decoders
 export interface UserProfile {
   authority: PublicKey;
@@ -279,6 +363,18 @@ export interface Follow {
   following: PublicKey;
 }
 
+export interface Retweet {
+  user: PublicKey;
+  originalTweet: PublicKey;
+  timestamp: number;
+}
+
+export interface Bookmark {
+  user: PublicKey;
+  tweet: PublicKey;
+  timestamp: number;
+}
+
 export function decodeUserProfile(accountInfo: AccountInfo<Buffer>): UserProfile {
   const data = accountInfo.data;
   let offset = 8;
@@ -298,7 +394,6 @@ export function decodeTweet(accountInfo: AccountInfo<Buffer>): Tweet {
   return { authority, content, timestamp, parent };
 }
 
-
 export function decodeLike(accountInfo: AccountInfo<Buffer>): Like {
   const data = accountInfo.data;
   let offset = 8;
@@ -313,6 +408,24 @@ export function decodeFollow(accountInfo: AccountInfo<Buffer>): Follow {
   const { value: follower, newOffset: o1 } = decodePublicKey(data, offset);
   const { value: following } = decodePublicKey(data, o1);
   return { follower, following };
+}
+
+export function decodeRetweet(accountInfo: AccountInfo<Buffer>): Retweet {
+  const data = accountInfo.data;
+  let offset = 8;
+  const { value: user, newOffset: o1 } = decodePublicKey(data, offset);
+  const { value: originalTweet, newOffset: o2 } = decodePublicKey(data, o1);
+  const { value: timestamp } = decodeI64(data, o2);
+  return { user, originalTweet, timestamp };
+}
+
+export function decodeBookmark(accountInfo: AccountInfo<Buffer>): Bookmark {
+  const data = accountInfo.data;
+  let offset = 8;
+  const { value: user, newOffset: o1 } = decodePublicKey(data, offset);
+  const { value: tweet, newOffset: o2 } = decodePublicKey(data, o1);
+  const { value: timestamp } = decodeI64(data, o2);
+  return { user, tweet, timestamp };
 }
 
 // Discriminator-based type checks
@@ -332,16 +445,26 @@ export function isFollowAccount(accountInfo: AccountInfo<Buffer>): boolean {
   return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.follow);
 }
 
+export function isRetweetAccount(accountInfo: AccountInfo<Buffer>): boolean {
+  return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.retweet);
+}
+
+export function isBookmarkAccount(accountInfo: AccountInfo<Buffer>): boolean {
+  return accountInfo.data.subarray(0, 8).equals(ACCOUNT_DISCRIMINATORS.bookmark);
+}
+
 // Fetch all program accounts by type
 export async function getAllProgramAccounts(
   connection: Connection,
-  accountType: 'userProfile' | 'tweet' | 'like' | 'follow'
+  accountType: 'userProfile' | 'tweet' | 'like' | 'follow' | 'retweet' | 'bookmark'
 ): Promise<Array<{ pubkey: PublicKey; account: AccountInfo<Buffer> }>> {
   const discriminatorMap = {
     userProfile: ACCOUNT_DISCRIMINATORS.userProfile,
     tweet: ACCOUNT_DISCRIMINATORS.tweet,
     like: ACCOUNT_DISCRIMINATORS.like,
-    follow: ACCOUNT_DISCRIMINATORS.follow
+    follow: ACCOUNT_DISCRIMINATORS.follow,
+    retweet: ACCOUNT_DISCRIMINATORS.retweet,
+    bookmark: ACCOUNT_DISCRIMINATORS.bookmark
   };
 
   const discriminator = discriminatorMap[accountType];
